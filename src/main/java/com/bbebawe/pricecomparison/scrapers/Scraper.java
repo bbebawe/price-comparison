@@ -6,13 +6,10 @@
 package com.bbebawe.pricecomparison.scrapers;
 
 
-import com.bbebawe.pricecomparison.products.Product;
-import com.bbebawe.pricecomparison.products.ScrapedProduct;
+import com.bbebawe.pricecomparison.hibernateutils.HibernateUtil;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -25,7 +22,8 @@ public abstract class Scraper extends Thread {
     private String scraperName;
     private String crawlURL;
     private String crawlQuery;
-    private Supermarket supermarket;
+    protected Supermarket supermarket;
+    protected HibernateUtil hibernateUtil;
 
 
     public Scraper() {
@@ -47,6 +45,15 @@ public abstract class Scraper extends Thread {
         this.supermarket = supermarket;
         this.threadName = threadName;
     }
+
+    public HibernateUtil getHibernateUtil() {
+        return hibernateUtil;
+    }
+
+    public void setHibernateUtil(HibernateUtil hibernateUtil) {
+        this.hibernateUtil = hibernateUtil;
+    }
+
     public String getThreadName() {
         return threadName;
     }

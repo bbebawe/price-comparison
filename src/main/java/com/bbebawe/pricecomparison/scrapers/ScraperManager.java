@@ -13,26 +13,13 @@ import java.util.List;
 
 public class ScraperManager {
     private ArrayList<Scraper> scraperList;
-    private HibernateUtil hibernateUtil;
 
 
-    //
-    public void initialiseScraperManager() {
-        // get app context
-        ApplicationContext appContext = new AnnotationConfigApplicationContext(AppConfig.class);
-        HibernateUtil hibernateUtil = appContext.getBean("hibernateUtil", HibernateUtil.class);
-        hibernateUtil.init();
-        // get scrapper list beans
-//        this.scraperList.add((AldiScraper) appContext.getBean("aldiScraper"));
-        this.scraperList.add((SainsburyScraper) appContext.getBean("sainsburyScraper"));
-//        this.scraperList.add((AmazonScraper) appContext.getBean("amazonScraper"));
-//        this.scraperList.add((CoopScraper) appContext.getBean("coopScraper"));
-        // get hibernate util beans
 
-    }
 
     public void startScraping() throws IOException {
         for (Scraper scraper : this.getScraperList()) {
+
                 scraper.start();
             }
     }

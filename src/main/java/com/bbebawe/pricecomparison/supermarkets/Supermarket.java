@@ -1,10 +1,15 @@
 package com.bbebawe.pricecomparison.supermarkets;
 
+import com.bbebawe.pricecomparison.products.ProductPrice;
+
 import javax.persistence.*;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "supermarket")
-public class Supermarket {
+public class Supermarket implements Serializable {
     @Id
     @Column(name = "supermarket_id")
     private int supermarketId;
@@ -17,6 +22,9 @@ public class Supermarket {
 
     @Column(name = "supermarket_image")
     private String supermarketImage;
+
+    @OneToMany(mappedBy = "supermarket")
+    private Set<ProductPrice> productPrices = new HashSet<ProductPrice>();
 
     public Supermarket() {
 

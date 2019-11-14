@@ -1,55 +1,76 @@
 package com.bbebawe.pricecomparison.appconfig;
 
-import com.bbebawe.pricecomparison.categories.Category;
 import com.bbebawe.pricecomparison.hibernateutils.HibernateUtil;
-import com.bbebawe.pricecomparison.products.Product;
-import com.bbebawe.pricecomparison.products.ProductPrice;
-
-
+import com.bbebawe.pricecomparison.scrapers.AmazonScraper;
 import com.bbebawe.pricecomparison.scrapers.SainsburyScraper;
+import com.bbebawe.pricecomparison.scrapers.ScraperManager;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
-import org.hibernate.event.spi.PreDeleteEvent;
+import org.hibernate.SessionFactory;
+import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistry;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 // annotate the file to be used as configuration file for the beans
 @Configuration
 public class AppConfig {
+    private SessionFactory sessionFactory;
+
+    // ScraperManager Bean
+    @Bean(name = "scraperManager")
+    public ScraperManager getScraperManager() {
+        ScraperManager scraperManager = new ScraperManager();
+        scraperManager.getScraperList().add(getSainsburyScraper());
+        return scraperManager;
+    }
 
     // HibernateUtil Bean
     @Bean(name = "hibernateUtil")
     public HibernateUtil getHibernateUtil() {
         HibernateUtil hibernateUtil = new HibernateUtil();
+        hibernateUtil.setSessionFactory(getSessionFactory());
         return hibernateUtil;
     }
 
-    /* ======================================================================== */
-    // product Bean
-    @Bean(name = "product")
-    public Product getProduct() {
-        Product product = new Product();
-        return product;
+    @Bean(name = "sessionFactory")
+    SessionFactory getSessionFactory() {
+        if (sessionFactory == null) {
+            try {
+                //Create a builder for the standard service registry
+                StandardServiceRegistryBuilder standardServiceRegistryBuilder = new StandardServiceRegistryBuilder();
+
+                //Load configuration from hibernate configuration file
+                standardServiceRegistryBuilder.configure("resources/hibernate.cfg.xml");
+
+                //Create the registry that will be used to build the session factory
+                StandardServiceRegistry registry = standardServiceRegistryBuilder.build();
+
+                try {
+                    //Create the session factory - this is the goal of the init method.
+                    sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
+                } catch (Exception e) {
+                /* The registry would be destroyed by the SessionFactory,
+                        but we had trouble building the SessionFactory, so destroy it manually */
+                    System.err.println("Session Factory build failed.");
+                    e.printStackTrace();
+                    StandardServiceRegistryBuilder.destroy(registry);
+                }
+
+                //output result
+                System.out.println("Session factory built.");
+
+            } catch (Throwable ex) {
+                // Make sure you log the exception, as it might be swallowed
+                System.err.println("SessionFactory creation failed." + ex);
+            }
+        }
+        return sessionFactory;
     }
 
-    /* ======================================================================== */
-    // product price bean
-    @Bean(name = "productPrice")
-    public ProductPrice getProductPrice() {
-        ProductPrice productPrice = new ProductPrice();
-        return productPrice;
-    }
-    /* ======================================================================== */
 
-    // category bean
-    @Bean(name = "category")
-    public Category getCategory() {
-        Category category = new Category();
-        return category;
-    }
 
-    /* ======================================================================== */
-
-    // supermarket beans
+    // Sainsbury supermarket Bean
     @Bean(name = "sainsbuysSupermarket")
     public Supermarket getSainsbury() {
         Supermarket sainsbury = new Supermarket();
@@ -60,6 +81,7 @@ public class AppConfig {
         return sainsbury;
     }
 
+    // Aldi supermarket Bean
     @Bean(name = "aldiSupermarket")
     public Supermarket getAldi() {
         Supermarket aldi = new Supermarket();
@@ -70,6 +92,7 @@ public class AppConfig {
         return aldi;
     }
 
+    // Cooperative supermarket Bean
     @Bean(name = "cooperativeSupermarket")
     public Supermarket getCooperative() {
         Supermarket cooperative = new Supermarket();
@@ -80,14 +103,15 @@ public class AppConfig {
         return cooperative;
     }
 
-    @Bean(name = "amazonSupermarket")
-    public Supermarket amazonPantry() {
-        Supermarket amazonPantry = new Supermarket();
-        amazonPantry.setSupermarketId(4);
-        amazonPantry.setSupermarketName("Amazon Pantry");
-        amazonPantry.setSupermarketURL("https://www.amazon.co.uk/Amazon-Pantry/b?ie=UTF8&node=5782660031");
-        amazonPantry.setSupermarketImage("https://images-eu.ssl-images-amazon.com/images/G/02/pantry/pantry-shelf-logo._CB519689796_.png");
-        return amazonPantry;
+    // AmazonFresh supermarket Bean
+    @Bean(name = "amazonFreshSupermarket")
+    public Supermarket getAmazonPantry() {
+        Supermarket amazonFresh = new Supermarket();
+        amazonFresh.setSupermarketId(4);
+        amazonFresh.setSupermarketName("Amazon Pantry");
+        amazonFresh.setSupermarketURL("https://www.amazon.co.uk/Amazon-Pantry/b?ie=UTF8&node=5782660031");
+        amazonFresh.setSupermarketImage("https://images-eu.ssl-images-amazon.com/images/G/02/pantry/pantry-shelf-logo._CB519689796_.png");
+        return amazonFresh;
     }
 
     /* ======================================================================== */
@@ -106,8 +130,8 @@ public class AppConfig {
 //        return aldiScraper;
 //    }
 //
-    @Bean
-    public SainsburyScraper sainsburyScraper() {
+    @Bean(name = "sainsburyScraper")
+    public SainsburyScraper getSainsburyScraper() {
         SainsburyScraper sainsburyScraper = new SainsburyScraper();
         sainsburyScraper.setThreadName("Sainsbury's Thread");
         sainsburyScraper.setScraperName("Sainsbury's Scraper");
@@ -116,22 +140,26 @@ public class AppConfig {
         sainsburyScraper.setCrawlQuery("milk");
         sainsburyScraper.setQuerySelector(".category-item__title");
         sainsburyScraper.setSupermarket(getSainsbury());
+        sainsburyScraper.setHibernateUtil(getHibernateUtil());
+        sainsburyScraper.getHibernateUtil();
         return sainsburyScraper;
     }
 
-//    @Bean
-//    public AmazonScraper amazonScraper() {
-//        AmazonScraper amazonScraper = new AmazonScraper();
-//        amazonScraper.setThreadName("Amazon Thread");
-//        amazonScraper.setScraperName("Amazon Scraper");
-//        amazonScraper.setCrawlDelay(5000);
-//        amazonScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
-//        amazonScraper.setCrawlQuery("milk");
-//        amazonScraper.setQuerySelector(".category-item__title");
-//        amazonScraper.setSupermarket(amazonPantry());
-//        return amazonScraper;
-//    }
-//
+    @Bean
+    public AmazonScraper amazonScraper() {
+        AmazonScraper amazonScraper = new AmazonScraper();
+        amazonScraper.setThreadName("Amazon Thread");
+        amazonScraper.setScraperName("Amazon Scraper");
+        amazonScraper.setCrawlDelay(5000);
+        amazonScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
+        amazonScraper.setCrawlQuery("milk");
+        amazonScraper.setQuerySelector(".category-item__title");
+        amazonScraper.setSupermarket(getAmazonPantry());
+        amazonScraper.setHibernateUtil(getHibernateUtil());
+        amazonScraper.getHibernateUtil().setSessionFactory(getSessionFactory());
+        return amazonScraper;
+    }
+
 //    @Bean
 //    public CoopScraper coopScraper() {
 //        CoopScraper coopScraper = new CoopScraper();

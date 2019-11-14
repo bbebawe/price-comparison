@@ -9,50 +9,28 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.tool.schema.internal.exec.ScriptTargetOutputToStdout;
 
+import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 public class HibernateUtil {
 
     private SessionFactory sessionFactory;
 
+    public SessionFactory getSessionFactory() {
+        return sessionFactory;
+    }
+
+    public void setSessionFactory(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
+    }
+
     public HibernateUtil() {
 
     }
 
-    // initialise hibernate util
-    public void init() {
-        try {
-            //Create a builder for the standard service registry
-            StandardServiceRegistryBuilder standardServiceRegistryBuilder = new StandardServiceRegistryBuilder();
-
-            //Load configuration from hibernate configuration file
-            standardServiceRegistryBuilder.configure("resources/hibernate.cfg.xml");
-
-            //Create the registry that will be used to build the session factory
-            StandardServiceRegistry registry = standardServiceRegistryBuilder.build();
-
-            try {
-                //Create the session factory - this is the goal of the init method.
-                sessionFactory = new MetadataSources(registry).buildMetadata().buildSessionFactory();
-            } catch (Exception e) {
-                /* The registry would be destroyed by the SessionFactory,
-                        but we had trouble building the SessionFactory, so destroy it manually */
-                System.err.println("Session Factory build failed.");
-                e.printStackTrace();
-                StandardServiceRegistryBuilder.destroy(registry);
-            }
-
-            //output result
-            System.out.println("Session factory built.");
-
-        } catch (Throwable ex) {
-            // Make sure you log the exception, as it might be swallowed
-            System.err.println("SessionFactory creation failed." + ex);
-        }
-    }
 
     /* ======================================================================== */
     // product utils
@@ -88,6 +66,40 @@ public class HibernateUtil {
         session.close();
         System.out.println("Product added to database with ID: " + product.getProductId());
     }
+
+
+    public Product getProductById(int productId) {
+        //Get a new Session instance from the session factory
+        Session session = sessionFactory.getCurrentSession();
+
+        //Start transaction
+        session.beginTransaction();
+
+        // get list of available categories
+        Product product = (Product) session.createQuery("from Product pr where  pr.productId=productId").getResultList().get(0);
+
+        //Close the session and release database connection
+        session.close();
+        return product;
+    }
+
+    public Product getProductByDescription(String description) {
+        //Get a new Session instance from the session factory
+        Session session = sessionFactory.getCurrentSession();
+
+        //Start transaction
+        session.beginTransaction();
+
+        String hql = "FROM Product pr WHERE pr.productDescription = :description";
+        Query query = session.createQuery(hql);
+        query.setParameter("description", description);
+        // get list of available categories
+        Product product = (Product) query.getResultList().get(0);
+
+        //Close the session and release database connection
+        session.close();
+        return product;
+    }
     /* ======================================================================== */
 
     // product price util
@@ -104,7 +116,7 @@ public class HibernateUtil {
 
         //Close the session and release database connection
         session.close();
-        System.out.println("Product added to database with ID: " + productPrice.getProductId());
+        System.out.println("Product added to database with ID: " + productPrice.getProduct().getProductId());
     }
 
     public List<ProductPrice> getProductPriceList() {
@@ -121,6 +133,59 @@ public class HibernateUtil {
         session.close();
         return productPriceList;
     }
+
+
+    public ProductPrice getProductPriceById(int id) {
+        //Get a new Session instance from the session factory
+        Session session = sessionFactory.getCurrentSession();
+
+        //Start transaction
+        session.beginTransaction();
+
+
+        String hql = "FROM ProductPrice obj WHERE obj.product.productId = :id";
+        Query query = session.createQuery(hql);
+        query.setParameter("id", id);
+        // get list of available categories
+        ProductPrice productPrice = (ProductPrice) query.getResultList().get(0);
+
+        //Close the session and release database connection
+        session.close();
+        return productPrice;
+
+    }
+public void updateProductPrice(double newPrice, int id) {
+    //Get a new Session instance from the session factory
+    Session session = sessionFactory.getCurrentSession();
+
+    //Start transaction
+    session.beginTransaction();
+
+
+    String hql = "UPDATE ProductPrice SET productPrice = :newPrice WHERE product.productId = :id";
+    Query query = session.createQuery(hql);
+    query.setParameter("newPrice", newPrice);
+    query.setParameter("id", id);
+    int result = query.executeUpdate();
+    session.close();
+    System.out.println("Updated : " + result);
+
+}
+//    public void updateProductPrice(ProductPrice productPrice) {
+//        Session session = sessionFactory.getCurrentSession();
+//        //Start transaction
+//        session.beginTransaction();
+//
+//        ProductPrice product = new ProductPrice();
+//        double price = product.getProductPrice();
+//        product.setProductPrice(price);
+//        session.update(product);
+//
+//        //Close the session and release database connection
+//        session.close();
+//        System.out.println("Product added to database with ID: " + productPrice.getProductId());
+//    }
+
     /* ======================================================================== */
 
     /* Supermarket utils */

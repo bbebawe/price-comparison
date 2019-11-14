@@ -6,13 +6,16 @@
 package com.bbebawe.pricecomparison.products;
 
 import javax.persistence.*;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author beshoy
  */
 @Entity
 @Table(name = "product")
-public class Product {
+public class Product implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
@@ -30,6 +33,8 @@ public class Product {
     @Column(name = "category_id")
     private int categoryId;
 
+    @OneToMany(mappedBy = "product")
+    private Set<ProductPrice> productPrices = new HashSet<ProductPrice>();
 
     public Product() {
     }

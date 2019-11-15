@@ -19,7 +19,6 @@ public class ScraperManager {
 
     public void startScraping() throws IOException {
         for (Scraper scraper : this.getScraperList()) {
-
                 scraper.start();
             }
     }

@@ -1,9 +1,7 @@
 package com.bbebawe.pricecomparison.appconfig;
 
 import com.bbebawe.pricecomparison.hibernateutils.HibernateUtil;
-import com.bbebawe.pricecomparison.scrapers.AmazonScraper;
-import com.bbebawe.pricecomparison.scrapers.SainsburyScraper;
-import com.bbebawe.pricecomparison.scrapers.ScraperManager;
+import com.bbebawe.pricecomparison.scrapers.*;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -22,6 +20,9 @@ public class AppConfig {
     public ScraperManager getScraperManager() {
         ScraperManager scraperManager = new ScraperManager();
         scraperManager.getScraperList().add(getSainsburyScraper());
+        scraperManager.getScraperList().add(getAldiScraper());
+        scraperManager.getScraperList().add(getCoopScraper());
+//        scraperManager.getScraperList().add(getAmazonFreshScraper());
         return scraperManager;
     }
 
@@ -68,8 +69,6 @@ public class AppConfig {
         return sessionFactory;
     }
 
-
-
     // Sainsbury supermarket Bean
     @Bean(name = "sainsbuysSupermarket")
     public Supermarket getSainsbury() {
@@ -81,11 +80,23 @@ public class AppConfig {
         return sainsbury;
     }
 
+    // AmazonFresh supermarket Bean
+    @Bean(name = "amazonFreshSupermarket")
+    public Supermarket getAmazonFresh() {
+        Supermarket amazonFresh = new Supermarket();
+        amazonFresh.setSupermarketId(2);
+        amazonFresh.setSupermarketName("Amazon Fresh");
+        amazonFresh.setSupermarketURL("https://www.amazon.co.uk/Amazon-Fresh-UK-Grocery-Shopping/b?ie=UTF8&node=6723205031");
+        amazonFresh.setSupermarketImage("https://images-eu.ssl-images-amazon.com/images/G/02/pantry/pantry-shelf-logo._CB519689796_.png");
+        return amazonFresh;
+    }
+
+
     // Aldi supermarket Bean
     @Bean(name = "aldiSupermarket")
     public Supermarket getAldi() {
         Supermarket aldi = new Supermarket();
-        aldi.setSupermarketId(2);
+        aldi.setSupermarketId(3);
         aldi.setSupermarketName("ALdi");
         aldi.setSupermarketURL("https://www.aldi.co.uk/");
         aldi.setSupermarketImage("https://cdn.aldi-digital.co.uk/32FDVWu4Lhbxgj9Z3v03ji0pGJIp?&w=70&h=84");
@@ -96,40 +107,31 @@ public class AppConfig {
     @Bean(name = "cooperativeSupermarket")
     public Supermarket getCooperative() {
         Supermarket cooperative = new Supermarket();
-        cooperative.setSupermarketId(3);
+        cooperative.setSupermarketId(4);
         cooperative.setSupermarketName("Co-operative");
         cooperative.setSupermarketURL("https://www.coop.co.uk/products/");
         cooperative.setSupermarketImage("https://www.coop.co.uk/products");
         return cooperative;
     }
 
-    // AmazonFresh supermarket Bean
-    @Bean(name = "amazonFreshSupermarket")
-    public Supermarket getAmazonPantry() {
-        Supermarket amazonFresh = new Supermarket();
-        amazonFresh.setSupermarketId(4);
-        amazonFresh.setSupermarketName("Amazon Pantry");
-        amazonFresh.setSupermarketURL("https://www.amazon.co.uk/Amazon-Pantry/b?ie=UTF8&node=5782660031");
-        amazonFresh.setSupermarketImage("https://images-eu.ssl-images-amazon.com/images/G/02/pantry/pantry-shelf-logo._CB519689796_.png");
-        return amazonFresh;
-    }
 
     /* ======================================================================== */
 
     // scrapper beans
-//    @Bean
-//    public AldiScraper aldiScraper() {
-//        AldiScraper aldiScraper = new AldiScraper();
-//        aldiScraper.setThreadName("Aldi Thread");
-//        aldiScraper.setScraperName("Aldi Scraper");
-//        aldiScraper.setCrawlDelay(5000);
-//        aldiScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
-//        aldiScraper.setCrawlQuery("milk");
-//        aldiScraper.setQuerySelector(".category-item__title");
-//        aldiScraper.setSupermarket(getAldi());
-//        return aldiScraper;
-//    }
-//
+    @Bean(name = "aldiScraper")
+    public AldiScraper getAldiScraper() {
+        AldiScraper aldiScraper = new AldiScraper();
+        aldiScraper.setThreadName("Aldi Thread");
+        aldiScraper.setScraperName("Aldi Scraper");
+        aldiScraper.setCrawlDelay(3000);
+        aldiScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
+        aldiScraper.setCrawlQuery("");
+        aldiScraper.setQuerySelector("");
+        aldiScraper.setSupermarket(getAldi());
+        aldiScraper.setHibernateUtil(getHibernateUtil());
+        return aldiScraper;
+    }
+
     @Bean(name = "sainsburyScraper")
     public SainsburyScraper getSainsburyScraper() {
         SainsburyScraper sainsburyScraper = new SainsburyScraper();
@@ -137,41 +139,40 @@ public class AppConfig {
         sainsburyScraper.setScraperName("Sainsbury's Scraper");
         sainsburyScraper.setCrawlDelay(3000);
         sainsburyScraper.setCrawlURL("https://www.sainsburys.co.uk/webapp/wcs/stores/servlet/SearchDisplayView?catalogId=10241&storeId=10151&langId=44&langId=44&storeId=10151&catalogId=10241&categoryId=&parent_category_rn=&top_category=&pageSize=60&orderBy=RELEVANCE&searchTerm=");
-        sainsburyScraper.setCrawlQuery("milk");
+        sainsburyScraper.setCrawlQuery("");
         sainsburyScraper.setQuerySelector(".category-item__title");
         sainsburyScraper.setSupermarket(getSainsbury());
         sainsburyScraper.setHibernateUtil(getHibernateUtil());
-        sainsburyScraper.getHibernateUtil();
         return sainsburyScraper;
     }
 
-    @Bean
-    public AmazonScraper amazonScraper() {
+    @Bean(name = "amazonFreshScraper")
+    public AmazonScraper getAmazonFreshScraper() {
         AmazonScraper amazonScraper = new AmazonScraper();
         amazonScraper.setThreadName("Amazon Thread");
         amazonScraper.setScraperName("Amazon Scraper");
-        amazonScraper.setCrawlDelay(5000);
-        amazonScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
-        amazonScraper.setCrawlQuery("milk");
-        amazonScraper.setQuerySelector(".category-item__title");
-        amazonScraper.setSupermarket(getAmazonPantry());
+        amazonScraper.setCrawlDelay(3000);
+        amazonScraper.setCrawlURL("");
+        amazonScraper.setCrawlQuery("");
+        amazonScraper.setQuerySelector(".s-search-results");
+        amazonScraper.setSupermarket(getAmazonFresh());
         amazonScraper.setHibernateUtil(getHibernateUtil());
-        amazonScraper.getHibernateUtil().setSessionFactory(getSessionFactory());
         return amazonScraper;
     }
 
-//    @Bean
-//    public CoopScraper coopScraper() {
-//        CoopScraper coopScraper = new CoopScraper();
-//        coopScraper.setThreadName("Aldi Thread");
-//        coopScraper.setScraperName("Aldi Scraper");
-//        coopScraper.setCrawlDelay(5000);
-//        coopScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
-//        coopScraper.setCrawlQuery("milk");
-//        coopScraper.setQuerySelector(".category-item__title");
-//        coopScraper.setSupermarket(getCooperative());
-//        return coopScraper;
-//    }
+    @Bean(name = "coopScraper")
+    public CoopScraper getCoopScraper() {
+        CoopScraper coopScraper = new CoopScraper();
+        coopScraper.setThreadName("Coop Thread");
+        coopScraper.setScraperName("Coop Scraper");
+        coopScraper.setCrawlDelay(3000);
+        coopScraper.setCrawlURL("https://www.coop.co.uk/products/search?query=");
+        coopScraper.setCrawlQuery("");
+        coopScraper.setQuerySelector("");
+        coopScraper.setSupermarket(getCooperative());
+        coopScraper.setHibernateUtil(getHibernateUtil());
+        return coopScraper;
+    }
 //
 //    // HibernateUtil bean  (SessionFactory)
 //    @Bean

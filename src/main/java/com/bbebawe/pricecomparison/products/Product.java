@@ -24,8 +24,8 @@ public class Product implements Serializable {
     @Column(name = "product_name")
     private String productName;
 
-    @Column(name = "product_description")
-    private String productDescription;
+    @Column(name = "product_keywords")
+    private String productKeywords;
 
     @Column(name = "product_image")
     private String productImage;
@@ -55,12 +55,12 @@ public class Product implements Serializable {
         this.productName = productName;
     }
 
-    public String getProductDescription() {
-        return productDescription;
+    public String getProductKeywords() {
+        return productKeywords;
     }
 
-    public void setProductDescription(String productDescription) {
-        this.productDescription = productDescription;
+    public void setProductKeywords(String productKeywords) {
+        this.productKeywords = productKeywords;
     }
 
     public String getProductImage() {
@@ -79,11 +79,18 @@ public class Product implements Serializable {
         this.categoryId = categoryId;
     }
 
+    public Set<ProductPrice> getProductPrices() {
+        return productPrices;
+    }
+
+    public void setProductPrices(Set<ProductPrice> productPrices) {
+        this.productPrices = productPrices;
+    }
 
     public String getProductInfo() {
         String productInfo = "Product Id: " + this.getProductId() + "\n-----------\n" + "Product Name: " +
                 this.getProductName() + "\n-----------\n" + "Product Category: " + this.getCategoryId() +
-                "\n-----------\n" + "Product Description: " + this.getProductDescription() + "\n-----------\n"
+                "\n-----------\n"
                 + "Product Image: " + this.getProductImage() + "\n-----------\n";
         return productInfo;
     }

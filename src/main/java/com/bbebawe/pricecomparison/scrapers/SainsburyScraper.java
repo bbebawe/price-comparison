@@ -42,7 +42,8 @@ public class SainsburyScraper extends Scraper {
 
         try {
             this.scrape();
-        } catch (IOException e) {
+            sleep(this.getCrawlDelay());
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
 
@@ -50,12 +51,12 @@ public class SainsburyScraper extends Scraper {
 
     @Override
     public void scrape() throws IOException {
-//        firsTimeScrap();
-updateScrapped();
-
+        System.out.println(" =========== Salisbury's Scrapper Started ===========");
+//        startScraping();
 
     }
 
+    // deprecated method, to be removed
     public void updateScrapped() throws IOException {
         List<Category> categoryList = hibernateUtil.getCategoryList();
 
@@ -78,10 +79,10 @@ updateScrapped();
                     ProductPrice currentProductPrice = hibernateUtil.getProductPriceById(product.getProductId());
                     String priceString = prices.get(i).text().replaceAll("[£|p|/unit|']", "");
                     double price = Double.parseDouble(priceString);
-                   if(currentProductPrice.getProductPrice() != price) {
-                       System.out.println("They are not equal");
-                       hibernateUtil.updateProductPrice(price, product.getProductId());
-                   }
+                    if (currentProductPrice.getProductPrice() != price) {
+                        System.out.println("They are not equal");
+                        hibernateUtil.updateProductPrice(price, product.getProductId());
+                    }
                 } else {
                     System.out.println("No");
                 }
@@ -89,49 +90,95 @@ updateScrapped();
         }
     }
 
-    public void firsTimeScrap() throws IOException {
-        List<Category> categoryList = hibernateUtil.getCategoryList();
+    public void startScraping() throws IOException {
+        List<Product> productList = hibernateUtil.getProductList();
+        List<ProductPrice> storedProducts = hibernateUtil.getProductPriceList();
 
-        for (Category category : categoryList) {
-            this.setCrawlQuery(category.getCategoryName());
+
+        for (Product product : productList) {
+            // set crawl query
+            this.setCrawlQuery(product.getProductName());
+            // jsoup scrapping
             Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
-            Elements products = doc.select("#productLister .productNameAndPromotions");
-            Elements prices = doc.select("#productLister .pricing .pricePerUnit");
-            Elements images = doc.select("#productLister .productNameAndPromotions img");
+            Elements scrapedProducts = doc.select("#productLister .productNameAndPromotions");
+            Elements scrapedPrices = doc.select("#productLister .pricing .pricePerUnit");
+            Elements scrapedImages = doc.select("#productLister .productNameAndPromotions img");
 
-            int indexOfDash = category.getCategoryName().indexOf("-");
-            String keyword1 = category.getCategoryName().substring(0, (indexOfDash - 1));
-            String keyword2 = category.getCategoryName().substring((indexOfDash + 2), category.getCategoryName().length());
-            System.out.println(keyword1);
-            System.out.println(keyword2);
+            // create list product keywords
+            String productKeyWordsString = product.getProductKeywords();
+            List<String> productKeywords = getListOfKeywords(productKeyWordsString);
 
 
-            for (int i = 0; i < products.size(); i++) {
-                Product productObj = new Product();
-                ProductPrice productPrice = new ProductPrice();
-                if (products.get(i).text().toLowerCase().contains(keyword1) && products.get(i).text().toLowerCase().contains(keyword2)) {
-                    // set product object attributes
-                    productObj.setProductName(category.getCategoryName());
-                    productObj.setProductDescription(products.get(i).text());
-                    productObj.setProductImage(images.get(i).attr("src"));
-                    productObj.setCategoryId(category.getCategoryId());
-                    productPrice.setProduct(productObj);
+            for (int i = 0; i < scrapedProducts.size(); i++) {
+                boolean productScrappedBefore = true;
+                boolean productMatch = true;
+                String priceString = scrapedPrices.get(i).text().replaceAll("[£|p|/unit|']", "");
+                double price = Double.parseDouble(priceString);
+                String scrapedProductDescription = scrapedProducts.get(i).text();
+                System.out.println(scrapedProductDescription);
 
-                    String priceString = prices.get(i).text().replaceAll("[£|p|/unit|']", "");
-                    double price = Double.parseDouble(priceString);
-                    productPrice.setProductPrice(price);
-                    productPrice.setPriceSource(this.getCrawlURL() + this.getCrawlQuery());
-                    System.out.println(price);
-
-                    Supermarket supermarket = this.getSupermarket();
-                    productPrice.setSupermarket(supermarket);
-                    hibernateUtil.saveProductPrice(productPrice);
-                    System.out.println("done");
-                } else {
-                    System.out.println("No");
+                // check if scrapped description match product keywords
+                for(String key : productKeywords) {
+                    if(!scrapedProductDescription.toLowerCase().contains(key)) {
+                        productMatch = false;
+                    }
+                }
+                if (productMatch) {
+                    System.out.println("product match");
+                    // get current products from db with same description, return empty list if nothing found
+                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(scrapedProductDescription);
+                    System.out.println(productPriceResults.size());
+                    // if product not found store it
+                    if (productPriceResults.size() == 0) {
+                        ProductPrice productPrice = new ProductPrice();
+                        productPrice.setProduct(product);
+                        productPrice.setProductPrice(price);
+                        productPrice.setProductDescription(scrapedProducts.get(i).text());
+                        productPrice.setPriceSource(this.getCrawlURL() + this.getCrawlQuery());
+                        Supermarket supermarket = this.getSupermarket();
+                        productPrice.setSupermarket(supermarket);
+                        hibernateUtil.saveProductPrice(productPrice);
+                        System.out.println("product added to db");
+                    } else if (productPriceResults.size() > 0) {
+                        // if price changes then update the product
+                        if (productPriceResults.get(0).getProductPrice() != price) {
+                            hibernateUtil.updateProductPrice(price, productPriceResults.get(0).getPriceId());
+                            System.out.println("Product Scrapped before and price changed");
+                        } else {
+                            System.out.println("Product scrapped before and price has not changed since then");
+                        }
+                    }
                 }
             }
         }
     }
 
+    // methods takes sting and return list of keywords based on the location of ,
+    public static List<String> getListOfKeywords(String keywordString) {
+        // lists keywords and index of , character
+        List<String> keywords = new ArrayList<String>();
+        List<Integer> indexList = new ArrayList<Integer>();
+
+        // get the indexes of , when it appears in the string
+        for (int i = 0; i < keywordString.length(); i++) {
+            if (keywordString.charAt(i) == ',') {
+                indexList.add(i);
+            }
+        }
+        // initial start and endsubstringg
+        int startAt = 0;
+        int endAt = indexList.get(0);
+
+        for (int i = 0; i <= indexList.size(); i++) {
+            if (i == indexList.size()) {
+                endAt = keywordString.length();
+            } else {
+                endAt = indexList.get(i);
+            }
+            String word = keywordString.substring(startAt, endAt);
+            keywords.add(word);
+            startAt = endAt + 1;
+        }
+        return keywords;
+    }
 }

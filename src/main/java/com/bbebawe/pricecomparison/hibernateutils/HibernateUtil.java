@@ -154,37 +154,43 @@ public class HibernateUtil {
         return productPrice;
 
     }
-public void updateProductPrice(double newPrice, int id) {
-    //Get a new Session instance from the session factory
-    Session session = sessionFactory.getCurrentSession();
 
-    //Start transaction
-    session.beginTransaction();
+    public void updateProductPrice(double newPrice, int id) {
+        //Get a new Session instance from the session factory
+        Session session = sessionFactory.getCurrentSession();
+
+        //Start transaction
+        session.beginTransaction();
 
 
-    String hql = "UPDATE ProductPrice SET productPrice = :newPrice WHERE product.productId = :id";
-    Query query = session.createQuery(hql);
-    query.setParameter("newPrice", newPrice);
-    query.setParameter("id", id);
-    int result = query.executeUpdate();
-    session.close();
-    System.out.println("Updated : " + result);
+        String hql = "UPDATE ProductPrice pr SET pr.productPrice = :newPrice WHERE pr.priceId = :id";
+        Query query = session.createQuery(hql);
+        query.setParameter("newPrice", newPrice);
+        query.setParameter("id", id);
+        int result = query.executeUpdate();
+        session.close();
+        System.out.println("Updated : " + result);
 
-}
-//    public void updateProductPrice(ProductPrice productPrice) {
-//        Session session = sessionFactory.getCurrentSession();
-//        //Start transaction
-//        session.beginTransaction();
-//
-//        ProductPrice product = new ProductPrice();
-//        double price = product.getProductPrice();
-//        product.setProductPrice(price);
-//        session.update(product);
-//
-//        //Close the session and release database connection
-//        session.close();
-//        System.out.println("Product added to database with ID: " + productPrice.getProductId());
-//    }
+    }
+
+    public List<ProductPrice> getProductPriceByDescription(String description) {
+        //Get a new Session instance from the session factory
+        Session session = sessionFactory.getCurrentSession();
+
+        //Start transaction
+        session.beginTransaction();
+
+        String hql = "FROM ProductPrice pr WHERE pr.productDescription = :description";
+        Query query = session.createQuery(hql);
+        query.setParameter("description", description);
+        // get list of available categories
+
+        List<ProductPrice> results = query.getResultList();
+
+        //Close the session and release database connection
+        session.close();
+        return results;
+    }
 
     /* ======================================================================== */
 

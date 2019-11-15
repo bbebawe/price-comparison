@@ -28,16 +28,16 @@ public class ProductPrice implements Serializable {
     @Column(name = "price_source")
     private String priceSource;
 
+    @Column(name = "product_description")
+    private String productDescription;
+
+
     public int getPriceId() {
         return priceId;
     }
 
     public void setPriceId(int priceId) {
         this.priceId = priceId;
-    }
-
-
-    public ProductPrice() {
     }
 
     public Product getProduct() {
@@ -70,6 +70,14 @@ public class ProductPrice implements Serializable {
 
     public void setPriceSource(String priceSource) {
         this.priceSource = priceSource;
+    }
+
+    public String getProductDescription() {
+        return productDescription;
+    }
+
+    public void setProductDescription(String productDescription) {
+        this.productDescription = productDescription;
     }
 
     public String getProductPriceInfo() {

@@ -102,5 +102,5 @@ public abstract class Scraper extends Thread {
         this.supermarket = supermarket;
     }
 
-    public abstract void scrape() throws IOException;
+    public abstract void scrape() throws IOException, InterruptedException;
 }

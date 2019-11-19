@@ -27,11 +27,11 @@ public class Product implements Serializable {
     @Column(name = "product_keywords")
     private String productKeywords;
 
-    @Column(name = "product_image")
-    private String productImage;
-
     @Column(name = "category_id")
     private int categoryId;
+
+    @Column(name = "product_volume")
+    private String productVolume;
 
     @OneToMany(mappedBy = "product")
     private Set<ProductPrice> productPrices = new HashSet<ProductPrice>();
@@ -63,20 +63,20 @@ public class Product implements Serializable {
         this.productKeywords = productKeywords;
     }
 
-    public String getProductImage() {
-        return productImage;
-    }
-
-    public void setProductImage(String productImage) {
-        this.productImage = productImage;
-    }
-
     public int getCategoryId() {
         return categoryId;
     }
 
     public void setCategoryId(int categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public String getProductVolume() {
+        return productVolume;
+    }
+
+    public void setProductVolume(String productVolume) {
+        this.productVolume = productVolume;
     }
 
     public Set<ProductPrice> getProductPrices() {
@@ -89,9 +89,7 @@ public class Product implements Serializable {
 
     public String getProductInfo() {
         String productInfo = "Product Id: " + this.getProductId() + "\n-----------\n" + "Product Name: " +
-                this.getProductName() + "\n-----------\n" + "Product Category: " + this.getCategoryId() +
-                "\n-----------\n"
-                + "Product Image: " + this.getProductImage() + "\n-----------\n";
+                this.getProductName() + "\n-----------\n" +  "Product Category: " + this.getCategoryId();
         return productInfo;
     }
 }

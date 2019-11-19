@@ -5,12 +5,13 @@
  */
 package com.bbebawe.pricecomparison.scrapers;
 
+
 import java.io.IOException;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import com.bbebawe.pricecomparison.categories.Category;
 import com.bbebawe.pricecomparison.products.Product;
 import com.bbebawe.pricecomparison.products.ProductPrice;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
@@ -19,18 +20,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 /**
- *
  * @author beshoy
  */
-public class AldiScraper extends Scraper{
+public class TescoScraper extends Scraper {
     private String querySelector;
 
-    public AldiScraper() {
-    }
-
-    public AldiScraper(String threadName, int crawlDelay, String scraperName, String crawlURL, String crawlQuery, Supermarket supermarket, String querySelector) {
-        super(threadName, crawlDelay, scraperName, crawlURL, crawlQuery, supermarket);
-        this.querySelector = querySelector;
+    public TescoScraper() {
     }
 
 
@@ -43,10 +38,8 @@ public class AldiScraper extends Scraper{
     }
 
 
-
-    @Override
     public void run() {
-        System.out.println(" =========== Alid Scrapper Started ===========");
+        System.out.println(" =========== Tesco Scrapper Started ===========");
         try {
             scrape();
         } catch (IOException e) {
@@ -57,15 +50,14 @@ public class AldiScraper extends Scraper{
     @Override
     public void scrape() throws IOException {
         List<Product> productList = hibernateUtil.getProductList();
-        List<ProductPrice> storedProducts = hibernateUtil.getProductPriceList();
 
         for (Product product : productList) {
             // set crawl query
             this.setCrawlQuery(product.getProductName());
             // jsoup scrapping
             Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
-            Elements scrapedProducts = doc.select(".category-grid--search  .category-item__title a");
-            Elements scrapedPrices = doc.select(".category-grid--search .category-item__price");
+            Elements scrapedProducts = doc.select(".product-list--list-item h3 a");
+            Elements scrapedPrices = doc.select(".product-list--list-item .price-per-sellable-unit .value");
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
@@ -75,13 +67,12 @@ public class AldiScraper extends Scraper{
             for (int i = 0; i < scrapedProducts.size(); i++) {
                 boolean productMatch = true;
 
-
                 String scrapedProductDescription = scrapedProducts.get(i).text();
                 System.out.println(scrapedProductDescription);
 
                 // check if scrapped description match product keywords
-                for(String key : productKeywords) {
-                    if(!scrapedProductDescription.toLowerCase().contains(key)) {
+                for (String key : productKeywords) {
+                    if (!scrapedProductDescription.toLowerCase().contains(key)) {
                         productMatch = false;
                     }
                 }
@@ -89,11 +80,13 @@ public class AldiScraper extends Scraper{
                 if (productMatch) {
                     System.out.println("product match");
                     String priceString = scrapedPrices.get(i).text();
+
+                    // try to convert price from penny to pound
                     double price = getProductPriceFromString(priceString);
 
                     // get current products from db with same description, return empty list if nothing found
                     List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(this.supermarket.getSupermarketId(), scrapedProductDescription);
-                    System.out.println(productPriceResults.size());
+
                     // if product not found store it
                     if (productPriceResults.size() == 0) {
                         ProductPrice productPrice = new ProductPrice();
@@ -103,7 +96,6 @@ public class AldiScraper extends Scraper{
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(this.supermarket.getSupermarketURL() + scrapedProducts.get(i).attr("href"));
                         productPrice.setSupermarket(this.supermarket);
-                        productPrice.setSupermarket(supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("product added to db");
                     } else if (productPriceResults.size() > 0) {

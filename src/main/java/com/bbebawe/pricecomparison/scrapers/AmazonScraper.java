@@ -21,6 +21,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -29,6 +34,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  */
 public class AmazonScraper extends Scraper {
     private String querySelector;
+    ChromeOptions options = new ChromeOptions();
 
     public AmazonScraper() {
     }
@@ -55,91 +61,95 @@ public class AmazonScraper extends Scraper {
 
     @Override
     public void run() {
+        System.out.println(" =========== Amazon Fresh Scrapper Started ===========");
         try {
-            this.scrape();
-            sleep(this.getCrawlDelay());
-        } catch (IOException | InterruptedException e) {
+            scrape();
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void scrape() throws IOException {
-        startScraping();
-
-    }
-
-
-
-    public void startScraping() throws IOException {
-        System.out.println(" =========== Amazon Scrapper Started ===========");
+    public void scrape() throws InterruptedException, IOException {
         List<Product> productList = hibernateUtil.getProductList();
-        List<ProductPrice> storedProducts = hibernateUtil.getProductPriceList();
+        // run driver headless - not needed if we want default options
+        options.setHeadless(true);
+        //Create instance of web driver
+        WebDriver driver = new ChromeDriver(options);
 
         for (Product product : productList) {
-            System.out.println("Scaping new product" + product.getProductName());
-            this.setCrawlURL("https://www.amazon.co.uk/s?k=");
+
             String crawlURLEnd = "&i=amazonfresh";
             // set crawl query
             this.setCrawlQuery(product.getProductName());
 
-            // jsoup scrapping
-            Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery() + crawlURLEnd).get();
-            Elements scrapedProducts = doc.select(".s-search-results .s-result-item h2");
-
-//            System.out.println(this.getCrawlURL()+this.getCrawlQuery()+crawlURLEnd);
-            for(int i = 0; i < scrapedProducts.size(); i++) {
-                System.out.println(scrapedProducts.get(i).text());
-            }
-//            Elements scrapedPrices = doc.select("#productLister .pricing .pricePerUnit");
-//            Elements scrapedImages = doc.select("#productLister .productNameAndPromotions img");
-
             // create list product keywords
-//            String productKeyWordsString = product.getProductKeywords();
-//            List<String> productKeywords = getListOfKeywords(productKeyWordsString);
+            String productKeyWordsString = product.getProductKeywords();
+            List<String> productKeywords = getListOfKeywords(productKeyWordsString);
+
+            //Navigate Chrome to page.
+            driver.get(this.getCrawlURL() + this.getCrawlQuery() + crawlURLEnd);
+
+            //Wait for page to load
+            try {
+                Thread.sleep(4000);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            // scrap product name, price and volume
+            List<WebElement> scrapedProducts = driver.findElements(By.cssSelector(".s-result-item h2 a"));
+            List<WebElement> scrapedProductsPrices = driver.findElements(By.cssSelector(".s-result-item .a-price .a-price-whole"));
+            List<WebElement> scrapedProductsPricesFraction = driver.findElements(By.cssSelector(".s-result-item .a-price .a-price-fraction"));
+
+            for (int i = 0; i < scrapedProducts.size(); i++) {
+                boolean productMatch = true;
+                String scrapedProductDescription = scrapedProducts.get(i).getText();
+                System.out.println(scrapedProductDescription);
 
 
-//            for (int i = 0; i < scrapedProducts.size(); i++) {
-//                boolean productScrappedBefore = true;
-//                boolean productMatch = true;
-//                String priceString = scrapedPrices.get(i).text().replaceAll("[£|p|/unit|']", "");
-//                double price = Double.parseDouble(priceString);
-//                String scrapedProductDescription = scrapedProducts.get(i).text();
-//                System.out.println(scrapedProductDescription);
-//
-//                // check if scrapped description match product keywords
-//                for(String key : productKeywords) {
-//                    if(!scrapedProductDescription.toLowerCase().contains(key)) {
-//                        productMatch = false;
-//                    }
-//                }
-//                if (productMatch) {
-//                    System.out.println("product match");
-//                    // get current products from db with same description, return empty list if nothing found
-//                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(scrapedProductDescription);
-//                    System.out.println(productPriceResults.size());
-//                    // if product not found store it
-//                    if (productPriceResults.size() == 0) {
-//                        ProductPrice productPrice = new ProductPrice();
-//                        productPrice.setProduct(product);
-//                        productPrice.setProductPrice(price);
-//                        productPrice.setProductDescription(scrapedProducts.get(i).text());
-//                        productPrice.setPriceSource(this.getCrawlURL() + this.getCrawlQuery());
-//                        Supermarket supermarket = this.getSupermarket();
-//                        productPrice.setSupermarket(supermarket);
-//                        hibernateUtil.saveProductPrice(productPrice);
-//                        System.out.println("product added to db");
-//                    } else if (productPriceResults.size() > 0) {
-//                        // if price changes then update the product
-//                        if (productPriceResults.get(0).getProductPrice() != price) {
-//                            hibernateUtil.updateProductPrice(price, productPriceResults.get(0).getPriceId());
-//                            System.out.println("Product Scrapped before and price changed");
-//                        } else {
-//                            System.out.println("Product scrapped before and price has not changed since then");
-//                        }
-//                    }
-//                }
-//            }
+                //  check if scrapped description match product keywords
+                for (String key : productKeywords) {
+                    if (!scrapedProductDescription.toLowerCase().contains(key)) {
+                        productMatch = false;
+                    }
+                }
+
+                if (productMatch) {
+                    System.out.println("product match");
+                    String priceString = scrapedProductsPrices.get(i).getText() + "." + scrapedProductsPricesFraction.get(i).getText();
+
+                    // try to convert price from penny to pound
+                    double price = getProductPriceFromString(priceString);
+
+                    // get current products from db with same description, return empty list if nothing found
+                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(this.supermarket.getSupermarketId(),scrapedProductDescription);
+                    // if product not found store it
+                    if (productPriceResults.size() == 0) {
+                        ProductPrice productPrice = new ProductPrice();
+                        productPrice.setProduct(product);
+                        productPrice.setProductPrice(price);
+                        productPrice.setProductVolume(product.getProductVolume());
+                        productPrice.setProductDescription(scrapedProductDescription);
+                        productPrice.setPriceSource(scrapedProducts.get(i).getAttribute("href"));
+                        productPrice.setSupermarket(this.supermarket);
+                        hibernateUtil.saveProductPrice(productPrice);
+                        System.out.println("product added to db");
+                    } else if (productPriceResults.size() > 0) {
+                        // if price changes then update the product
+                        if (productPriceResults.get(0).getProductPrice() != price) {
+                            hibernateUtil.updateProductPrice(price, productPriceResults.get(0).getPriceId());
+                            System.out.println("Product Scrapped before and price changed");
+                        } else {
+                            System.out.println("Product scrapped before and price has not changed since then");
+                        }
+                    }
+                }
+            }
+
+            System.out.println("Sleeping");
+            this.sleep(6000);
+            System.out.println("Back Again");
         }
     }
 
@@ -170,5 +180,27 @@ public class AmazonScraper extends Scraper {
             startAt = endAt + 1;
         }
         return keywords;
+    }
+
+    public double convertProductPriceToPound(double priceInPenny) {
+        double price = 0;
+        // convert price from penny to pound
+        if ((priceInPenny == Math.floor(priceInPenny)) && !Double.isInfinite(priceInPenny)) {
+            price = priceInPenny / 100;
+        } else {
+            price = priceInPenny;
+        }
+        return price;
+    }
+    public double getProductPriceFromString(String priceString) {
+        double price = 0;
+        String cleanedPriceString = priceString.replaceAll("[£|p|/unit|']", "");
+        double tempPrice = Double.parseDouble(cleanedPriceString);
+        if (cleanedPriceString.length() < 3) {
+            price = tempPrice / 100;
+        } else {
+            price = tempPrice;
+        }
+        return price;
     }
 }

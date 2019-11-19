@@ -19,17 +19,23 @@ import com.bbebawe.pricecomparison.supermarkets.Supermarket;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  * @author beshoy
  */
-public class CoopScraper extends Scraper {
+public class AsdaScraper extends Scraper {
     private String querySelector;
+    ChromeOptions options = new ChromeOptions();
 
-    public CoopScraper() {
+    public AsdaScraper() {
     }
 
-    public CoopScraper(String threadName, int crawlDelay, String scraperName, String crawlURL, String crawlQuery, Supermarket supermarket, String querySelector) {
+    public AsdaScraper(String threadName, int crawlDelay, String scraperName, String crawlURL, String crawlQuery, Supermarket supermarket, String querySelector) {
         super(threadName, crawlDelay, scraperName, crawlURL, crawlQuery, supermarket);
         this.querySelector = querySelector;
     }
@@ -46,74 +52,72 @@ public class CoopScraper extends Scraper {
 
     @Override
     public void run() {
-
-        try {
-            this.scrape();
-            sleep(this.getCrawlDelay());
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+        System.out.println(" =========== Asda Scrapper Started ===========");
+        scrape();
     }
 
     @Override
-    public void scrape() throws IOException {
-        System.out.println(" =========== Coop Scrapper Started ===========");
-        startScraping();
-    }
-
-
-
-    public void startScraping() throws IOException {
+    public void scrape() {
         List<Product> productList = hibernateUtil.getProductList();
-        List<ProductPrice> storedProducts = hibernateUtil.getProductPriceList();
 
+        // run driver headless - not needed if we want default options
+        options.setHeadless(true);
+        //Create instance of web driver
+        WebDriver driver = new ChromeDriver(options);
 
         for (Product product : productList) {
             // set crawl query
             this.setCrawlQuery(product.getProductName());
-            // jsoup scrapping
-            Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
-            Elements scrapedProducts = doc.select(".coop-c-card__title");
-
-            for (int i = 0; i < scrapedProducts.size(); i++) {
-                System.out.println(scrapedProducts.get(i).text());
-            }
-            Elements scrapedPrices = doc.select(".coop-c-card__price");
-            Elements scrapedImages = doc.select(".coop-c-card__image img");
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
             List<String> productKeywords = getListOfKeywords(productKeyWordsString);
 
+            //Navigate Chrome to page.
+            driver.get(this.getCrawlURL() + this.getCrawlQuery());
+
+            //Wait for page to load
+            try {
+                Thread.sleep(3000);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            // scrap product name, price and volume
+            List<WebElement> scrapedProducts = driver.findElements(By.className("co-product__anchor"));
+            List<WebElement> scrapedProductsVolume = driver.findElements(By.className("co-product__volume"));
+            List<WebElement> scrapedProductsPrices = driver.findElements(By.className("co-product__price"));
+
 
             for (int i = 0; i < scrapedProducts.size(); i++) {
-                boolean productScrappedBefore = true;
                 boolean productMatch = true;
-                String priceString = scrapedPrices.get(i).text().replaceAll("[£|p|/unit|']", "");
-                double price = Double.parseDouble(priceString);
-                String scrapedProductDescription = scrapedProducts.get(i).text();
+                String scrapedProductDescription = scrapedProducts.get(i).getText() + " " + scrapedProductsVolume.get(i).getText();
                 System.out.println(scrapedProductDescription);
 
-                // check if scrapped description match product keywords
-                for(String key : productKeywords) {
-                    if(!scrapedProductDescription.toLowerCase().contains(key)) {
+
+                //  check if scrapped description match product keywords
+                for (String key : productKeywords) {
+                    if (!scrapedProductDescription.toLowerCase().contains(key)) {
                         productMatch = false;
                     }
                 }
+
                 if (productMatch) {
                     System.out.println("product match");
+                    String priceString = scrapedProductsPrices.get(i).getText();
+                    double price = getProductPriceFromString(priceString);
+
                     // get current products from db with same description, return empty list if nothing found
-                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(scrapedProductDescription);
-                    System.out.println(productPriceResults.size());
+                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(this.supermarket.getSupermarketId(), scrapedProductDescription);
                     // if product not found store it
                     if (productPriceResults.size() == 0) {
                         ProductPrice productPrice = new ProductPrice();
                         productPrice.setProduct(product);
                         productPrice.setProductPrice(price);
-                        productPrice.setProductDescription(scrapedProducts.get(i).text());
-                        productPrice.setPriceSource(this.getCrawlURL() + this.getCrawlQuery());
-                        Supermarket supermarket = this.getSupermarket();
-                        productPrice.setSupermarket(supermarket);
+                        productPrice.setProductVolume(product.getProductVolume());
+                        productPrice.setProductDescription(scrapedProductDescription);
+                        productPrice.setPriceSource(scrapedProducts.get(i).getAttribute("href"));
+                        productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("product added to db");
                     } else if (productPriceResults.size() > 0) {
@@ -127,8 +131,13 @@ public class CoopScraper extends Scraper {
                     }
                 }
             }
+
         }
+
+        //Exit driver and close Chrome
+        driver.quit();
     }
+
 
     // methods takes sting and return list of keywords based on the location of ,
     public static List<String> getListOfKeywords(String keywordString) {
@@ -153,9 +162,36 @@ public class CoopScraper extends Scraper {
                 endAt = indexList.get(i);
             }
             String word = keywordString.substring(startAt, endAt);
+            if (word.contains(" pint")) {
+                String replacedWord = word.replaceAll(" pint", "pt");
+                word = replacedWord;
+            }
             keywords.add(word);
             startAt = endAt + 1;
         }
         return keywords;
+    }
+
+    public double convertProductPriceToPound(double priceInPenny) {
+        double price = 0;
+        // convert price from penny to pound
+        if ((priceInPenny == Math.floor(priceInPenny)) && !Double.isInfinite(priceInPenny)) {
+            price = priceInPenny / 100;
+        } else {
+            price = priceInPenny;
+        }
+        return price;
+    }
+
+    public double getProductPriceFromString(String priceString) {
+        double price = 0;
+        String cleanedPriceString = priceString.replaceAll("[£|p|/unit|']", "");
+        double tempPrice = Double.parseDouble(cleanedPriceString);
+        if (cleanedPriceString.length() < 3) {
+            price = tempPrice / 100;
+        } else {
+            price = tempPrice;
+        }
+        return price;
     }
 }

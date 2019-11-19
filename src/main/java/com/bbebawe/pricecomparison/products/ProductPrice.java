@@ -31,6 +31,8 @@ public class ProductPrice implements Serializable {
     @Column(name = "product_description")
     private String productDescription;
 
+    @Column(name = "product_volume")
+    private String productVolume;
 
     public int getPriceId() {
         return priceId;
@@ -78,6 +80,14 @@ public class ProductPrice implements Serializable {
 
     public void setProductDescription(String productDescription) {
         this.productDescription = productDescription;
+    }
+
+    public String getProductVolume() {
+        return productVolume;
+    }
+
+    public void setProductVolume(String productVolume) {
+        this.productVolume = productVolume;
     }
 
     public String getProductPriceInfo() {

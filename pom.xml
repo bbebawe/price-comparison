@@ -29,6 +29,19 @@
             <version>${jsoup.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+
+        <!-- FuzzyWuzzy -->
+        <dependency>
+            <groupId>me.xdrop</groupId>
+            <artifactId>fuzzywuzzy</artifactId>
+            <version>1.2.0</version>
+        </dependency>
         <!-- JUnit jupiter api -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

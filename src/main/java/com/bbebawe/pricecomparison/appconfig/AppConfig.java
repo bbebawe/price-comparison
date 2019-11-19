@@ -20,9 +20,10 @@ public class AppConfig {
     public ScraperManager getScraperManager() {
         ScraperManager scraperManager = new ScraperManager();
         scraperManager.getScraperList().add(getSainsburyScraper());
+        scraperManager.getScraperList().add((getTescoScraper()));
+        scraperManager.getScraperList().add(getAsdaScraper());
         scraperManager.getScraperList().add(getAldiScraper());
-        scraperManager.getScraperList().add(getCoopScraper());
-//        scraperManager.getScraperList().add(getAmazonFreshScraper());
+        scraperManager.getScraperList().add(getAmazonFreshScraper());
         return scraperManager;
     }
 
@@ -75,7 +76,7 @@ public class AppConfig {
         Supermarket sainsbury = new Supermarket();
         sainsbury.setSupermarketId(1);
         sainsbury.setSupermarketName("Sainsbury's");
-        sainsbury.setSupermarketURL("https://www.sainsburys.co.uk/");
+        sainsbury.setSupermarketURL("https://www.sainsburys.co.uk/shop/gb/groceries/");
         sainsbury.setSupermarketImage("https://www.sainsburys.co.uk/assets/images/logos_logoImage_sainsburys-logo.svg");
         return sainsbury;
     }
@@ -91,29 +92,38 @@ public class AppConfig {
         return amazonFresh;
     }
 
-
     // Aldi supermarket Bean
     @Bean(name = "aldiSupermarket")
     public Supermarket getAldi() {
         Supermarket aldi = new Supermarket();
         aldi.setSupermarketId(3);
         aldi.setSupermarketName("ALdi");
-        aldi.setSupermarketURL("https://www.aldi.co.uk/");
+        aldi.setSupermarketURL("https://www.aldi.co.uk");
         aldi.setSupermarketImage("https://cdn.aldi-digital.co.uk/32FDVWu4Lhbxgj9Z3v03ji0pGJIp?&w=70&h=84");
         return aldi;
     }
 
     // Cooperative supermarket Bean
-    @Bean(name = "cooperativeSupermarket")
-    public Supermarket getCooperative() {
-        Supermarket cooperative = new Supermarket();
-        cooperative.setSupermarketId(4);
-        cooperative.setSupermarketName("Co-operative");
-        cooperative.setSupermarketURL("https://www.coop.co.uk/products/");
-        cooperative.setSupermarketImage("https://www.coop.co.uk/products");
-        return cooperative;
+    @Bean(name = "asdaSupermarket")
+    public Supermarket getAsda() {
+        Supermarket asda = new Supermarket();
+        asda.setSupermarketId(4);
+        asda.setSupermarketName("Asda");
+        asda.setSupermarketURL("https://groceries.asda.com");
+        asda.setSupermarketImage("https://www.asda.com/");
+        return asda;
     }
 
+    // tesco supermarket Bean
+    @Bean(name = "tescoSupermarket")
+    public Supermarket getTesco() {
+        Supermarket tesco = new Supermarket();
+        tesco.setSupermarketId(5);
+        tesco.setSupermarketName("Tesco");
+        tesco.setSupermarketURL("https://www.tesco.com");
+        tesco.setSupermarketImage("https://www.tesco.com/groceries/en-GB/");
+        return tesco;
+    }
 
     /* ======================================================================== */
 
@@ -140,7 +150,7 @@ public class AppConfig {
         sainsburyScraper.setCrawlDelay(3000);
         sainsburyScraper.setCrawlURL("https://www.sainsburys.co.uk/webapp/wcs/stores/servlet/SearchDisplayView?catalogId=10241&storeId=10151&langId=44&langId=44&storeId=10151&catalogId=10241&categoryId=&parent_category_rn=&top_category=&pageSize=60&orderBy=RELEVANCE&searchTerm=");
         sainsburyScraper.setCrawlQuery("");
-        sainsburyScraper.setQuerySelector(".category-item__title");
+        sainsburyScraper.setQuerySelector("");
         sainsburyScraper.setSupermarket(getSainsbury());
         sainsburyScraper.setHibernateUtil(getHibernateUtil());
         return sainsburyScraper;
@@ -151,8 +161,8 @@ public class AppConfig {
         AmazonScraper amazonScraper = new AmazonScraper();
         amazonScraper.setThreadName("Amazon Thread");
         amazonScraper.setScraperName("Amazon Scraper");
-        amazonScraper.setCrawlDelay(3000);
-        amazonScraper.setCrawlURL("");
+        amazonScraper.setCrawlDelay(5000);
+        amazonScraper.setCrawlURL("https://www.amazon.co.uk/s?k=");
         amazonScraper.setCrawlQuery("");
         amazonScraper.setQuerySelector(".s-search-results");
         amazonScraper.setSupermarket(getAmazonFresh());
@@ -160,25 +170,31 @@ public class AppConfig {
         return amazonScraper;
     }
 
-    @Bean(name = "coopScraper")
-    public CoopScraper getCoopScraper() {
-        CoopScraper coopScraper = new CoopScraper();
-        coopScraper.setThreadName("Coop Thread");
-        coopScraper.setScraperName("Coop Scraper");
-        coopScraper.setCrawlDelay(3000);
-        coopScraper.setCrawlURL("https://www.coop.co.uk/products/search?query=");
-        coopScraper.setCrawlQuery("");
-        coopScraper.setQuerySelector("");
-        coopScraper.setSupermarket(getCooperative());
-        coopScraper.setHibernateUtil(getHibernateUtil());
-        return coopScraper;
+    @Bean(name = "asdaScraper")
+    public AsdaScraper getAsdaScraper() {
+        AsdaScraper asdaScraper = new AsdaScraper();
+        asdaScraper.setThreadName("Asda Thread");
+        asdaScraper.setScraperName("Asda Scraper");
+        asdaScraper.setCrawlDelay(3000);
+        asdaScraper.setCrawlURL("https://groceries.asda.com/search/");
+        asdaScraper.setCrawlQuery("");
+        asdaScraper.setQuerySelector("");
+        asdaScraper.setSupermarket(getAsda());
+        asdaScraper.setHibernateUtil(getHibernateUtil());
+        return asdaScraper;
     }
-//
-//    // HibernateUtil bean  (SessionFactory)
-//    @Bean
-//    public HibernateUtil hibernateUtil() {
-//        HibernateUtil hibernateUtil = new HibernateUtil();
-//        return hibernateUtil;
-//    }
 
+    @Bean(name = "tescoScraper")
+    public TescoScraper getTescoScraper() {
+        TescoScraper tescoScraper = new TescoScraper();
+        tescoScraper.setThreadName("Tesco Thread");
+        tescoScraper.setScraperName("Tesco Scraper");
+        tescoScraper.setCrawlDelay(3000);
+        tescoScraper.setCrawlURL("https://www.tesco.com/groceries/en-GB/search?query=");
+        tescoScraper.setCrawlQuery("");
+        tescoScraper.setQuerySelector("");
+        tescoScraper.setSupermarket(getTesco());
+        tescoScraper.setHibernateUtil(getHibernateUtil());
+        return tescoScraper;
+    }
 }

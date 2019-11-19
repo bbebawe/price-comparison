@@ -173,18 +173,19 @@ public class HibernateUtil {
 
     }
 
-    public List<ProductPrice> getProductPriceByDescription(String description) {
+    public List<ProductPrice> getProductPriceByDescription(int supermarketId, String description) {
         //Get a new Session instance from the session factory
         Session session = sessionFactory.getCurrentSession();
 
         //Start transaction
         session.beginTransaction();
 
-        String hql = "FROM ProductPrice pr WHERE pr.productDescription = :description";
+        String hql = "FROM ProductPrice pr WHERE pr.supermarket.supermarketId =: supermarketId AND pr.productDescription = :description";
         Query query = session.createQuery(hql);
+        query.setParameter("supermarketId", supermarketId);
         query.setParameter("description", description);
-        // get list of available categories
 
+        // get list of available products
         List<ProductPrice> results = query.getResultList();
 
         //Close the session and release database connection

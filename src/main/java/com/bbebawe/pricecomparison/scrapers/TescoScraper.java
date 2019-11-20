@@ -56,8 +56,9 @@ public class TescoScraper extends Scraper {
             this.setCrawlQuery(product.getProductName());
             // jsoup scrapping
             Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
-            Elements scrapedProducts = doc.select(".product-list--list-item h3 a");
+            Elements scrapedProducts = doc.select(".product-lists .product-list--list-item h3 a");
             Elements scrapedPrices = doc.select(".product-list--list-item .price-per-sellable-unit .value");
+            Elements scrapedImages = doc.select(".product-lists .product-list--list-item  .product-image__container img");
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
@@ -79,8 +80,13 @@ public class TescoScraper extends Scraper {
 
                 if (productMatch) {
                     System.out.println("product match");
-                    String priceString = scrapedPrices.get(i).text();
-
+                    String priceString = "0";
+                    try {
+                        priceString = scrapedPrices.get(i).text();
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println("Could not get product price");
+                        priceString = "0";
+                    }
                     // try to convert price from penny to pound
                     double price = getProductPriceFromString(priceString);
 
@@ -95,6 +101,7 @@ public class TescoScraper extends Scraper {
                         productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(this.supermarket.getSupermarketURL() + scrapedProducts.get(i).attr("href"));
+                        productPrice.setProductImage(scrapedImages.get(i).attr("src"));
                         productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("product added to db");

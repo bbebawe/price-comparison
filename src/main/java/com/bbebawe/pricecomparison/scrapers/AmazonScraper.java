@@ -101,7 +101,13 @@ public class AmazonScraper extends Scraper {
             List<WebElement> scrapedProducts = driver.findElements(By.cssSelector(".s-result-item h2 a"));
             List<WebElement> scrapedProductsPrices = driver.findElements(By.cssSelector(".s-result-item .a-price .a-price-whole"));
             List<WebElement> scrapedProductsPricesFraction = driver.findElements(By.cssSelector(".s-result-item .a-price .a-price-fraction"));
+            List<WebElement> scrapedProductsImages = driver.findElements(By.cssSelector(".s-result-item .s-image"));
 
+            System.out.println("product name");
+            System.out.println(scrapedProducts.size());
+            System.out.println(scrapedProductsPrices.size());
+            System.out.println(scrapedProductsPricesFraction.size());
+            System.out.println(scrapedProductsImages.size());
             for (int i = 0; i < scrapedProducts.size(); i++) {
                 boolean productMatch = true;
                 String scrapedProductDescription = scrapedProducts.get(i).getText();
@@ -117,13 +123,19 @@ public class AmazonScraper extends Scraper {
 
                 if (productMatch) {
                     System.out.println("product match");
-                    String priceString = scrapedProductsPrices.get(i).getText() + "." + scrapedProductsPricesFraction.get(i).getText();
 
+                    String priceString = "0";
+                    try {
+                        priceString = scrapedProductsPrices.get(i).getText() + "." + scrapedProductsPricesFraction.get(i).getText();
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println("Could not get product price");
+                        priceString = "0";
+                    }
                     // try to convert price from penny to pound
                     double price = getProductPriceFromString(priceString);
 
                     // get current products from db with same description, return empty list if nothing found
-                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(this.supermarket.getSupermarketId(),scrapedProductDescription);
+                    List<ProductPrice> productPriceResults = hibernateUtil.getProductPriceByDescription(this.supermarket.getSupermarketId(), scrapedProductDescription);
                     // if product not found store it
                     if (productPriceResults.size() == 0) {
                         ProductPrice productPrice = new ProductPrice();
@@ -132,6 +144,7 @@ public class AmazonScraper extends Scraper {
                         productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(scrapedProducts.get(i).getAttribute("href"));
+                        productPrice.setProductImage(scrapedProductsImages.get(i).getAttribute("src"));
                         productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("product added to db");
@@ -148,7 +161,7 @@ public class AmazonScraper extends Scraper {
             }
 
             System.out.println("Sleeping");
-            this.sleep(6000);
+            this.sleep(2000);
             System.out.println("Back Again");
         }
     }
@@ -192,6 +205,7 @@ public class AmazonScraper extends Scraper {
         }
         return price;
     }
+
     public double getProductPriceFromString(String priceString) {
         double price = 0;
         String cleanedPriceString = priceString.replaceAll("[£|p|/unit|']", "");

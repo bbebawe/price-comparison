@@ -66,6 +66,7 @@ public class AldiScraper extends Scraper{
             Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
             Elements scrapedProducts = doc.select(".category-grid--search  .category-item__title a");
             Elements scrapedPrices = doc.select(".category-grid--search .category-item__price");
+            Elements scrapedProductImages = doc.select(".category-grid--search .category-item__image img");
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
@@ -88,7 +89,13 @@ public class AldiScraper extends Scraper{
 
                 if (productMatch) {
                     System.out.println("product match");
-                    String priceString = scrapedPrices.get(i).text();
+                    String priceString = "0";
+                    try {
+                        priceString = scrapedPrices.get(i).text();
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println("Could not get product price");
+                        priceString = "0";
+                    }
                     double price = getProductPriceFromString(priceString);
 
                     // get current products from db with same description, return empty list if nothing found
@@ -102,6 +109,7 @@ public class AldiScraper extends Scraper{
                         productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(this.supermarket.getSupermarketURL() + scrapedProducts.get(i).attr("href"));
+                        productPrice.setProductImage(scrapedProductImages.get(i).attr("src"));
                         productPrice.setSupermarket(this.supermarket);
                         productPrice.setSupermarket(supermarket);
                         hibernateUtil.saveProductPrice(productPrice);

@@ -34,6 +34,9 @@ public class ProductPrice implements Serializable {
     @Column(name = "product_volume")
     private String productVolume;
 
+    @Column(name = "product_image")
+    private String productImage;
+
     public int getPriceId() {
         return priceId;
     }
@@ -88,6 +91,14 @@ public class ProductPrice implements Serializable {
 
     public void setProductVolume(String productVolume) {
         this.productVolume = productVolume;
+    }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
     }
 
     public String getProductPriceInfo() {

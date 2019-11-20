@@ -87,7 +87,9 @@ public class AsdaScraper extends Scraper {
             List<WebElement> scrapedProducts = driver.findElements(By.className("co-product__anchor"));
             List<WebElement> scrapedProductsVolume = driver.findElements(By.className("co-product__volume"));
             List<WebElement> scrapedProductsPrices = driver.findElements(By.className("co-product__price"));
+            List<WebElement> scrapedProductsImages = driver.findElements(By.cssSelector(".co-product__image"));
 
+            System.out.println(product.getProductName());
 
             for (int i = 0; i < scrapedProducts.size(); i++) {
                 boolean productMatch = true;
@@ -104,7 +106,13 @@ public class AsdaScraper extends Scraper {
 
                 if (productMatch) {
                     System.out.println("product match");
-                    String priceString = scrapedProductsPrices.get(i).getText();
+                    String priceString = "0";
+                    try {
+                        priceString = scrapedProductsPrices.get(i).getText();
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println("Could not get product price");
+                        priceString = "0";
+                    }
                     double price = getProductPriceFromString(priceString);
 
                     // get current products from db with same description, return empty list if nothing found
@@ -117,6 +125,8 @@ public class AsdaScraper extends Scraper {
                         productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(scrapedProducts.get(i).getAttribute("href"));
+                        productPrice.setProductImage(scrapedProductsImages.get(i).getAttribute("src"));
+
                         productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("product added to db");

@@ -59,8 +59,14 @@ public class SainsburyScraper extends Scraper {
 
             // jsoup scrapping
             Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
-            Elements scrapedProducts = doc.select("#productLister .productNameAndPromotions a");
-            Elements scrapedPrices = doc.select("#productLister .pricing .pricePerUnit");
+            Elements scrapedProducts = doc.select("#productLister .productLister .product .productInfo .productNameAndPromotions h3 a");
+            Elements scrapedPrices = doc.select("#productLister .productLister .addToTrolleytabBox .priceTab .pricing .pricePerUnit");
+            Elements scrapedImages = doc.select("#productLister .productLister .product .productInfo .productNameAndPromotions h3 a img");
+            System.out.println(product.getProductName());
+            System.out.println(scrapedProducts.size());
+            System.out.println(scrapedPrices.size());
+            System.out.println(scrapedImages.size());
+            System.out.println("------------------------------");
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
@@ -70,8 +76,6 @@ public class SainsburyScraper extends Scraper {
                 boolean productMatch = true;
 
                 String scrapedProductDescription = scrapedProducts.get(i).text();
-                System.out.println(scrapedProductDescription);
-
                 // check if scrapped description match product keywords
                 for (String key : productKeywords) {
                     if (!scrapedProductDescription.toLowerCase().contains(key)) {
@@ -81,8 +85,13 @@ public class SainsburyScraper extends Scraper {
 
                 if (productMatch) {
                     System.out.println("product match");
-                    String priceString = scrapedPrices.get(i).text();
-
+                    String priceString = "0";
+                    try {
+                        priceString = scrapedPrices.get(i).text();
+                    } catch (IndexOutOfBoundsException e) {
+                        System.out.println("Could not get product price");
+                        priceString = "0";
+                    }
                     // try to convert price from penny to pound
                     double price = getProductPriceFromString(priceString);
                     // get current products from db with same description
@@ -96,6 +105,7 @@ public class SainsburyScraper extends Scraper {
                         productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(scrapedProducts.get(i).attr("href"));
+                        productPrice.setProductImage("https:" + scrapedImages.get(i).attr("src"));
                         productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("============= product added to db ==============");

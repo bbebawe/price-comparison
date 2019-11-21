@@ -24,6 +24,7 @@ public class AppConfig {
         scraperManager.getScraperList().add(getAsdaScraper());
         scraperManager.getScraperList().add(getAldiScraper());
         scraperManager.getScraperList().add(getAmazonFreshScraper());
+        scraperManager.getScraperList().add(getMorrisonsScraper());
         return scraperManager;
     }
 
@@ -81,6 +82,16 @@ public class AppConfig {
         return sainsbury;
     }
 
+    // Morrisons supermarket Bean
+    @Bean(name = "morrisonsSupermarket")
+    public Supermarket getMorrisons() {
+        Supermarket morrisons = new Supermarket();
+        morrisons.setSupermarketId(6);
+        morrisons.setSupermarketName("Morrisons");
+        morrisons.setSupermarketURL("https://groceries.morrisons.com");
+        morrisons.setSupermarketImage("https://groceries.morrisons.com");
+        return morrisons;
+    }
     // AmazonFresh supermarket Bean
     @Bean(name = "amazonFreshSupermarket")
     public Supermarket getAmazonFresh() {
@@ -154,6 +165,20 @@ public class AppConfig {
         sainsburyScraper.setSupermarket(getSainsbury());
         sainsburyScraper.setHibernateUtil(getHibernateUtil());
         return sainsburyScraper;
+    }
+
+    @Bean(name = "morrisonsScraper")
+    public MorrisonsScraper getMorrisonsScraper() {
+        MorrisonsScraper morrisonsScraper = new MorrisonsScraper();
+        morrisonsScraper.setThreadName("Morrisons Thread");
+        morrisonsScraper.setScraperName("Morrisons craper");
+        morrisonsScraper.setCrawlDelay(3000);
+        morrisonsScraper.setCrawlURL("https://groceries.morrisons.com/search?entry=");
+        morrisonsScraper.setCrawlQuery("");
+        morrisonsScraper.setQuerySelector("");
+        morrisonsScraper.setSupermarket(getMorrisons());
+        morrisonsScraper.setHibernateUtil(getHibernateUtil());
+        return morrisonsScraper;
     }
 
     @Bean(name = "amazonFreshScraper")

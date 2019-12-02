@@ -28,11 +28,14 @@ public class MorrisonsScraper extends Scraper {
 
 
     public void run() {
-        System.out.println(" =========== Morrisons Scrapper Started ===========");
-        try {
-            scrape();
-        } catch (IOException e) {
-            e.printStackTrace();
+        while (true) {
+            System.out.println(" =========== Morrisons Scrapper Started ===========");
+            try {
+                scrape();
+                Thread.sleep(this.getCrawlDelay());
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -58,17 +61,10 @@ public class MorrisonsScraper extends Scraper {
             List<String> productKeywords = this.getProductKeywords(productKeyWordsString);
 
             for (int i = 0; i < scrapedProducts.size(); i++) {
-                boolean productMatch = true;
-
                 String scrapedProductDescription = scrapedProducts.get(i).text();
-                // check if scrapped description match product keywords
-                for (String key : productKeywords) {
-                    if (!scrapedProductDescription.toLowerCase().contains(key)) {
-                        productMatch = false;
-                    }
-                }
+                boolean isProductMatch = productMatch(productKeywords, scrapedProductDescription);
 
-                if (productMatch) {
+                if (isProductMatch) {
                     System.out.println("product match");
                     String priceString = "0";
                     try {
@@ -87,10 +83,9 @@ public class MorrisonsScraper extends Scraper {
                         ProductPrice productPrice = new ProductPrice();
                         productPrice.setProduct(product);
                         productPrice.setProductPrice(price);
-                        productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(this.supermarket.getSupermarketURL() + scrapedProductsLinks.get(i).attr("href"));
-                        productPrice.setProductImage(this.supermarket.getSupermarketURL()+ scrapedImages.get(i).attr("src"));
+                        productPrice.setProductImage(this.supermarket.getSupermarketURL() + scrapedImages.get(i).attr("src"));
                         productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("============= product added to db ==============");
@@ -108,7 +103,19 @@ public class MorrisonsScraper extends Scraper {
         }
     }
 
+    @Override
+    public boolean productMatch(List<String> productKeywords, String scrapedProductDescription) {
+        boolean productMatch = true;
+        for (String key : productKeywords) {
+            if (!scrapedProductDescription.toLowerCase().contains(key)) {
+                productMatch = false;
+            }
+        }
+        return productMatch;
+    }
+
     // methods takes sting and return list of keywords based on the location of ,
+    @Override
     public List<String> getProductKeywords(String keywordString) {
         // lists keywords and index of , character
         List<String> keywords = new ArrayList<String>();
@@ -120,7 +127,7 @@ public class MorrisonsScraper extends Scraper {
                 indexList.add(i);
             }
         }
-        // initial start and end substringg
+        // initial start and end substring
         int startAt = 0;
         int endAt = indexList.get(0);
 
@@ -137,17 +144,7 @@ public class MorrisonsScraper extends Scraper {
         return keywords;
     }
 
-    public double convertProductPriceToPound(double priceInPenny) {
-        double price = 0;
-        // convert price from penny to pound
-        if ((priceInPenny == Math.floor(priceInPenny)) && !Double.isInfinite(priceInPenny)) {
-            price = priceInPenny / 100;
-        } else {
-            price = priceInPenny;
-        }
-        return price;
-    }
-
+    @Override
     public double getProductPriceFromString(String priceString) {
         double price = 0;
         String cleanedPriceString = priceString.replaceAll("[£|p|/unit|']", "");

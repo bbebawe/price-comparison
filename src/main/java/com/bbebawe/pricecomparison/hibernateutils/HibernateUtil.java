@@ -32,7 +32,6 @@ public class HibernateUtil {
     }
 
 
-    /* ======================================================================== */
     // product utils
     // get product list
     public List<Product> getProductList() {
@@ -83,23 +82,6 @@ public class HibernateUtil {
         return product;
     }
 
-    public Product getProductByDescription(String description) {
-        //Get a new Session instance from the session factory
-        Session session = sessionFactory.getCurrentSession();
-
-        //Start transaction
-        session.beginTransaction();
-
-        String hql = "FROM Product pr WHERE pr.productDescription = :description";
-        Query query = session.createQuery(hql);
-        query.setParameter("description", description);
-        // get list of available categories
-        Product product = (Product) query.getResultList().get(0);
-
-        //Close the session and release database connection
-        session.close();
-        return product;
-    }
     /* ======================================================================== */
 
     // product price util

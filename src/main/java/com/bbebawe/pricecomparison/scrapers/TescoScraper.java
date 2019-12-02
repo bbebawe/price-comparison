@@ -18,12 +18,18 @@ import com.bbebawe.pricecomparison.supermarkets.Supermarket;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 
 /**
  * @author beshoy
  */
 public class TescoScraper extends Scraper {
     private String querySelector;
+    ChromeOptions options = new ChromeOptions();
 
     public TescoScraper() {
     }
@@ -39,50 +45,59 @@ public class TescoScraper extends Scraper {
 
 
     public void run() {
-        System.out.println(" =========== Tesco Scrapper Started ===========");
-        try {
-            scrape();
-        } catch (IOException e) {
-            e.printStackTrace();
+        while (true) {
+            System.out.println(" =========== Tesco Scrapper Started ===========");
+            try {
+                scrape();
+                Thread.sleep(this.getCrawlDelay());
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @Override
     public void scrape() throws IOException {
         List<Product> productList = hibernateUtil.getProductList();
+        // run driver headless - not needed if we want default options
+        options.setHeadless(true);
+        //Create instance of web driver
+        WebDriver driver = new ChromeDriver(options);
 
         for (Product product : productList) {
-            // set crawl query
-            this.setCrawlQuery(product.getProductName());
-            // jsoup scrapping
-            Document doc = Jsoup.connect(this.getCrawlURL() + this.getCrawlQuery()).get();
-            Elements scrapedProducts = doc.select(".product-lists .product-list--list-item h3 a");
-            Elements scrapedPrices = doc.select(".product-list--list-item .price-per-sellable-unit .value");
-            Elements scrapedImages = doc.select(".product-lists .product-list--list-item  .product-image__container img");
+            // set scrapper crawl query
+            this.setCrawlQuery(product.getProductQuery());
+
+            //Navigate Chrome to page.
+            driver.get(this.getCrawlURL() + this.getCrawlQuery());
+
+            //Wait for page to load
+            try {
+                Thread.sleep(3000);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            // scrap product name, price and volume and image
+            List<WebElement> scrapedProducts = driver.findElements(By.cssSelector(".product-lists .product-list--list-item h3 a"));
+            List<WebElement> scrapedVolumes = driver.findElements(By.cssSelector("co-product__volume"));
+            List<WebElement> scrapedPrices = driver.findElements(By.cssSelector(".product-list--list-item .price-per-sellable-unit .value"));
+            List<WebElement> scrapedImages = driver.findElements(By.cssSelector(".product-lists .product-list--list-item  .product-image__container img"));
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
-            List<String> productKeywords = getListOfKeywords(productKeyWordsString);
+            List<String> productKeywords = getProductKeywords(productKeyWordsString);
 
 
             for (int i = 0; i < scrapedProducts.size(); i++) {
-                boolean productMatch = true;
-
-                String scrapedProductDescription = scrapedProducts.get(i).text();
+                String scrapedProductDescription = scrapedProducts.get(i).getText();
                 System.out.println(scrapedProductDescription);
-
-                // check if scrapped description match product keywords
-                for (String key : productKeywords) {
-                    if (!scrapedProductDescription.toLowerCase().contains(key)) {
-                        productMatch = false;
-                    }
-                }
-
-                if (productMatch) {
+               boolean isProductMatch = productMatch(productKeywords, scrapedProductDescription);
+                if (isProductMatch) {
                     System.out.println("product match");
                     String priceString = "0";
                     try {
-                        priceString = scrapedPrices.get(i).text();
+                        priceString = scrapedPrices.get(i).getText();
                     } catch (IndexOutOfBoundsException e) {
                         System.out.println("Could not get product price");
                         priceString = "0";
@@ -98,10 +113,9 @@ public class TescoScraper extends Scraper {
                         ProductPrice productPrice = new ProductPrice();
                         productPrice.setProduct(product);
                         productPrice.setProductPrice(price);
-                        productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
-                        productPrice.setPriceSource(this.supermarket.getSupermarketURL() + scrapedProducts.get(i).attr("href"));
-                        productPrice.setProductImage(scrapedImages.get(i).attr("src"));
+                        productPrice.setPriceSource(this.supermarket.getSupermarketURL() + scrapedProducts.get(i).getAttribute("href"));
+                        productPrice.setProductImage(scrapedImages.get(i).getAttribute("src"));
                         productPrice.setSupermarket(this.supermarket);
                         hibernateUtil.saveProductPrice(productPrice);
                         System.out.println("product added to db");
@@ -119,8 +133,20 @@ public class TescoScraper extends Scraper {
         }
     }
 
+    @Override
+    public boolean productMatch(List<String> productKeywords, String scrapedProductDescription) {
+        boolean productMatch = true;
+        for (String key : productKeywords) {
+            if (!scrapedProductDescription.toLowerCase().contains(key)) {
+                productMatch = false;
+            }
+        }
+        return productMatch;
+    }
+
     // methods takes sting and return list of keywords based on the location of ,
-    public static List<String> getListOfKeywords(String keywordString) {
+    @Override
+    public List<String> getProductKeywords(String keywordString) {
         // lists keywords and index of , character
         List<String> keywords = new ArrayList<String>();
         List<Integer> indexList = new ArrayList<Integer>();
@@ -131,7 +157,7 @@ public class TescoScraper extends Scraper {
                 indexList.add(i);
             }
         }
-        // initial start and endsubstringg
+        // initial start and end substring
         int startAt = 0;
         int endAt = indexList.get(0);
 
@@ -148,16 +174,7 @@ public class TescoScraper extends Scraper {
         return keywords;
     }
 
-    public double convertProductPriceToPound(double priceInPenny) {
-        double price = 0;
-        // convert price from penny to pound
-        if ((priceInPenny == Math.floor(priceInPenny)) && !Double.isInfinite(priceInPenny)) {
-            price = priceInPenny / 100;
-        } else {
-            price = priceInPenny;
-        }
-        return price;
-    }
+    @Override
     public double getProductPriceFromString(String priceString) {
         double price = 0;
         String cleanedPriceString = priceString.replaceAll("[£|p|/unit|']", "");
@@ -169,4 +186,6 @@ public class TescoScraper extends Scraper {
         }
         return price;
     }
+
+
 }

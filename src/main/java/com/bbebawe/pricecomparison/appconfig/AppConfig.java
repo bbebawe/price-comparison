@@ -22,7 +22,6 @@ public class AppConfig {
         scraperManager.getScraperList().add(getSainsburyScraper());
         scraperManager.getScraperList().add((getTescoScraper()));
         scraperManager.getScraperList().add(getAsdaScraper());
-        scraperManager.getScraperList().add(getAldiScraper());
         scraperManager.getScraperList().add(getAmazonFreshScraper());
         scraperManager.getScraperList().add(getMorrisonsScraper());
         return scraperManager;
@@ -36,6 +35,7 @@ public class AppConfig {
         return hibernateUtil;
     }
 
+    // Session Factory Bean
     @Bean(name = "sessionFactory")
     SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
@@ -71,28 +71,29 @@ public class AppConfig {
         return sessionFactory;
     }
 
-    // Sainsbury supermarket Bean
+    // Sainsbury Supermarket Bean
     @Bean(name = "sainsbuysSupermarket")
     public Supermarket getSainsbury() {
         Supermarket sainsbury = new Supermarket();
         sainsbury.setSupermarketId(1);
         sainsbury.setSupermarketName("Sainsbury's");
         sainsbury.setSupermarketURL("https://www.sainsburys.co.uk/shop/gb/groceries/");
-        sainsbury.setSupermarketImage("https://www.sainsburys.co.uk/assets/images/logos_logoImage_sainsburys-logo.svg");
+        sainsbury.setSupermarketImage("https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Sainsbury%27s_Logo.svg/1280px-Sainsbury%27s_Logo.svg.png");
         return sainsbury;
     }
 
-    // Morrisons supermarket Bean
+    // Morrisons Supermarket Bean
     @Bean(name = "morrisonsSupermarket")
     public Supermarket getMorrisons() {
         Supermarket morrisons = new Supermarket();
-        morrisons.setSupermarketId(6);
+        morrisons.setSupermarketId(5);
         morrisons.setSupermarketName("Morrisons");
         morrisons.setSupermarketURL("https://groceries.morrisons.com");
-        morrisons.setSupermarketImage("https://groceries.morrisons.com");
+        morrisons.setSupermarketImage("https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Wm_Morrison_Supermarkets_logo.svg/1280px-Wm_Morrison_Supermarkets_logo.svg.png");
         return morrisons;
     }
-    // AmazonFresh supermarket Bean
+
+    // AmazonFresh Supermarket Bean
     @Bean(name = "amazonFreshSupermarket")
     public Supermarket getAmazonFresh() {
         Supermarket amazonFresh = new Supermarket();
@@ -103,56 +104,29 @@ public class AppConfig {
         return amazonFresh;
     }
 
-    // Aldi supermarket Bean
-    @Bean(name = "aldiSupermarket")
-    public Supermarket getAldi() {
-        Supermarket aldi = new Supermarket();
-        aldi.setSupermarketId(3);
-        aldi.setSupermarketName("ALdi");
-        aldi.setSupermarketURL("https://www.aldi.co.uk");
-        aldi.setSupermarketImage("https://cdn.aldi-digital.co.uk/32FDVWu4Lhbxgj9Z3v03ji0pGJIp?&w=70&h=84");
-        return aldi;
-    }
-
-    // Cooperative supermarket Bean
+    // Asda Supermarket Bean
     @Bean(name = "asdaSupermarket")
     public Supermarket getAsda() {
         Supermarket asda = new Supermarket();
-        asda.setSupermarketId(4);
+        asda.setSupermarketId(3);
         asda.setSupermarketName("Asda");
         asda.setSupermarketURL("https://groceries.asda.com");
-        asda.setSupermarketImage("https://www.asda.com/");
+        asda.setSupermarketImage("https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/ASDALogo-2017.svg/1280px-ASDALogo-2017.svg.png");
         return asda;
     }
 
-    // tesco supermarket Bean
+    // Tesco Supermarket Bean
     @Bean(name = "tescoSupermarket")
     public Supermarket getTesco() {
         Supermarket tesco = new Supermarket();
-        tesco.setSupermarketId(5);
+        tesco.setSupermarketId(4);
         tesco.setSupermarketName("Tesco");
         tesco.setSupermarketURL("https://www.tesco.com");
-        tesco.setSupermarketImage("https://www.tesco.com/groceries/en-GB/");
+        tesco.setSupermarketImage("https://upload.wikimedia.org/wikipedia/commons/4/4d/Tescologo.svg");
         return tesco;
     }
 
-    /* ======================================================================== */
-
-    // scrapper beans
-    @Bean(name = "aldiScraper")
-    public AldiScraper getAldiScraper() {
-        AldiScraper aldiScraper = new AldiScraper();
-        aldiScraper.setThreadName("Aldi Thread");
-        aldiScraper.setScraperName("Aldi Scraper");
-        aldiScraper.setCrawlDelay(3000);
-        aldiScraper.setCrawlURL("https://www.aldi.co.uk/search?text=");
-        aldiScraper.setCrawlQuery("");
-        aldiScraper.setQuerySelector("");
-        aldiScraper.setSupermarket(getAldi());
-        aldiScraper.setHibernateUtil(getHibernateUtil());
-        return aldiScraper;
-    }
-
+    // Sainsbury Scrapper Bean
     @Bean(name = "sainsburyScraper")
     public SainsburyScraper getSainsburyScraper() {
         SainsburyScraper sainsburyScraper = new SainsburyScraper();
@@ -167,6 +141,7 @@ public class AppConfig {
         return sainsburyScraper;
     }
 
+    // Morrisons Scrapper Bean
     @Bean(name = "morrisonsScraper")
     public MorrisonsScraper getMorrisonsScraper() {
         MorrisonsScraper morrisonsScraper = new MorrisonsScraper();
@@ -181,6 +156,7 @@ public class AppConfig {
         return morrisonsScraper;
     }
 
+    // AmazonFresh Scrapper Bean
     @Bean(name = "amazonFreshScraper")
     public AmazonScraper getAmazonFreshScraper() {
         AmazonScraper amazonScraper = new AmazonScraper();
@@ -195,6 +171,7 @@ public class AppConfig {
         return amazonScraper;
     }
 
+    // Asda Scrapper Bean
     @Bean(name = "asdaScraper")
     public AsdaScraper getAsdaScraper() {
         AsdaScraper asdaScraper = new AsdaScraper();
@@ -209,6 +186,7 @@ public class AppConfig {
         return asdaScraper;
     }
 
+    // Tesco Scrapper Bean
     @Bean(name = "tescoScraper")
     public TescoScraper getTescoScraper() {
         TescoScraper tescoScraper = new TescoScraper();

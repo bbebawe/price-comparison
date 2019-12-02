@@ -10,9 +10,9 @@ import com.bbebawe.pricecomparison.hibernateutils.HibernateUtil;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
- *
  * @author beshoy
  */
 public abstract class Scraper extends Thread {
@@ -37,6 +37,7 @@ public abstract class Scraper extends Thread {
         this.supermarket = supermarket;
         this.threadName = threadName;
     }
+
     public Scraper(String threadName, int crawlDelay, String scraperName, String crawlURL, Supermarket supermarket) {
         this.crawlDelay = crawlDelay;
         this.scraperName = scraperName;
@@ -103,4 +104,12 @@ public abstract class Scraper extends Thread {
     }
 
     public abstract void scrape() throws IOException, InterruptedException;
+
+    public abstract boolean productMatch(List<String> productKeywords, String scrapedProductDescription);
+
+    public abstract List<String> getProductKeywords(String keywordString);
+
+    public abstract double getProductPriceFromString(String priceString);
+
+
 }

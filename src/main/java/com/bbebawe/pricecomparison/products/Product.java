@@ -24,6 +24,9 @@ public class Product implements Serializable {
     @Column(name = "product_name")
     private String productName;
 
+    @Column(name = "product_query")
+    private String productQuery;
+
     @Column(name = "product_keywords")
     private String productKeywords;
 
@@ -53,6 +56,14 @@ public class Product implements Serializable {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public String getProductQuery() {
+        return productQuery;
+    }
+
+    public void setProductQuery(String productQuery) {
+        this.productQuery = productQuery;
     }
 
     public String getProductKeywords() {

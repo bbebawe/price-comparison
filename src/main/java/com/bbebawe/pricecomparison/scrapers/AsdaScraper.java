@@ -52,8 +52,15 @@ public class AsdaScraper extends Scraper {
 
     @Override
     public void run() {
-        System.out.println(" =========== Asda Scrapper Started ===========");
-        scrape();
+        while(true) {
+            System.out.println(" =========== Asda Scrapper Started ===========");
+            try {
+                scrape();
+                Thread.sleep(this.getCrawlDelay());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -71,7 +78,7 @@ public class AsdaScraper extends Scraper {
 
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
-            List<String> productKeywords = getListOfKeywords(productKeyWordsString);
+            List<String> productKeywords = getProductKeywords(productKeyWordsString);
 
             //Navigate Chrome to page.
             driver.get(this.getCrawlURL() + this.getCrawlQuery());
@@ -92,19 +99,11 @@ public class AsdaScraper extends Scraper {
             System.out.println(product.getProductName());
 
             for (int i = 0; i < scrapedProducts.size(); i++) {
-                boolean productMatch = true;
                 String scrapedProductDescription = scrapedProducts.get(i).getText() + " " + scrapedProductsVolume.get(i).getText();
                 System.out.println(scrapedProductDescription);
+                boolean isProductMatch = productMatch(productKeywords, scrapedProductDescription);
 
-
-                //  check if scrapped description match product keywords
-                for (String key : productKeywords) {
-                    if (!scrapedProductDescription.toLowerCase().contains(key)) {
-                        productMatch = false;
-                    }
-                }
-
-                if (productMatch) {
+                if (isProductMatch) {
                     System.out.println("product match");
                     String priceString = "0";
                     try {
@@ -122,7 +121,6 @@ public class AsdaScraper extends Scraper {
                         ProductPrice productPrice = new ProductPrice();
                         productPrice.setProduct(product);
                         productPrice.setProductPrice(price);
-                        productPrice.setProductVolume(product.getProductVolume());
                         productPrice.setProductDescription(scrapedProductDescription);
                         productPrice.setPriceSource(scrapedProducts.get(i).getAttribute("href"));
                         productPrice.setProductImage(scrapedProductsImages.get(i).getAttribute("src"));
@@ -149,8 +147,20 @@ public class AsdaScraper extends Scraper {
     }
 
 
+    @Override
+    public boolean productMatch(List<String> productKeywords, String scrapedProductDescription) {
+        boolean productMatch = true;
+        for (String key : productKeywords) {
+            if (!scrapedProductDescription.toLowerCase().contains(key)) {
+                productMatch = false;
+            }
+        }
+        return productMatch;
+    }
+
     // methods takes sting and return list of keywords based on the location of ,
-    public static List<String> getListOfKeywords(String keywordString) {
+    @Override
+    public List<String> getProductKeywords(String keywordString) {
         // lists keywords and index of , character
         List<String> keywords = new ArrayList<String>();
         List<Integer> indexList = new ArrayList<Integer>();
@@ -161,7 +171,7 @@ public class AsdaScraper extends Scraper {
                 indexList.add(i);
             }
         }
-        // initial start and end substringg
+        // initial start and end substring
         int startAt = 0;
         int endAt = indexList.get(0);
 
@@ -172,27 +182,13 @@ public class AsdaScraper extends Scraper {
                 endAt = indexList.get(i);
             }
             String word = keywordString.substring(startAt, endAt);
-            if (word.contains(" pint")) {
-                String replacedWord = word.replaceAll(" pint", "pt");
-                word = replacedWord;
-            }
             keywords.add(word);
             startAt = endAt + 1;
         }
         return keywords;
     }
 
-    public double convertProductPriceToPound(double priceInPenny) {
-        double price = 0;
-        // convert price from penny to pound
-        if ((priceInPenny == Math.floor(priceInPenny)) && !Double.isInfinite(priceInPenny)) {
-            price = priceInPenny / 100;
-        } else {
-            price = priceInPenny;
-        }
-        return price;
-    }
-
+    @Override
     public double getProductPriceFromString(String priceString) {
         double price = 0;
         String cleanedPriceString = priceString.replaceAll("[£|p|/unit|']", "");

@@ -42,6 +42,7 @@
             <artifactId>fuzzywuzzy</artifactId>
             <version>1.2.0</version>
         </dependency>
+
         <!-- JUnit jupiter api -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -74,8 +75,32 @@
     </dependencies>
 
     <build>
-        <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>3.2.0</version>
+                    <configuration>
+                        <!-- get all project dependencies -->
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <!-- MainClass in mainfest make a executable jar -->
+                        <archive>
+                            <manifest>
+                                <mainClass>com.bbebawe.pricecomparison.Main</mainClass>
+                            </manifest>
+                        </archive>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>make-assembly</id>
+                            <phase>package</phase><!-- bind to the packaging phase -->
+                            <goals>
+                                <goal>single</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
@@ -90,6 +115,8 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.8.0</version>
                 </plugin>
+
+
                 <!-- maven surefire plugin to run junit5 tests -->
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
@@ -107,10 +134,7 @@
                         </dependency>
                     </dependencies>
                 </plugin>
-                <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
-                </plugin>
+
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
                     <version>2.5.2</version>
@@ -129,7 +153,6 @@
                     <version>3.0.0</version>
                 </plugin>
             </plugins>
-        </pluginManagement>
         <resources>
             <!-- add beans.xml to jar files -->
             <resource>
@@ -157,7 +180,7 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.0.1</version>
                 <configuration>
-<!--                    <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>-->
+                    <!--                    <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>-->
                 </configuration>
             </plugin>
         </plugins>

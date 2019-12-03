@@ -1,46 +1,62 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package com.bbebawe.pricecomparison.scrapers;
 
 
-import java.io.IOException;
-import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.bbebawe.pricecomparison.categories.Category;
 import com.bbebawe.pricecomparison.products.Product;
 import com.bbebawe.pricecomparison.products.ProductPrice;
-import com.bbebawe.pricecomparison.supermarkets.Supermarket;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * @author beshoy
+ * The SainsburyScraper class represents web scrapper to scrape Sainsbury website.
+ * The SainsburyScraper extends Scraper class and implements its abstract methods.
+ * The class runs in a thread execution and use JSoup to scrap Sainsbury website.
+ *
+ * @see Scraper
  */
 public class SainsburyScraper extends Scraper {
     private String querySelector;
 
+    /**
+     * No argument Default constructor.
+     */
     public SainsburyScraper() {
     }
 
+    /**
+     * get scrapper query selector.
+     *
+     * @return scrapper query selector.
+     */
     public String getQuerySelector() {
         return querySelector;
     }
 
+    /**
+     * sets scrapper query selector.
+     *
+     * @param querySelector
+     */
     public void setQuerySelector(String querySelector) {
         this.querySelector = querySelector;
     }
 
+    /**
+     * The run method is an implementation of Thread class method.
+     * The method calls a loop which keeps scrapping the website while the application is running.
+     * The method implements Thread execution and causes the Thread to sleep for certain time.
+     */
     public void run() {
         while (true) {
             System.out.println(" =========== Salisbury's Scrapper Started ===========");
             try {
                 scrape();
+                // put the thread to sleep
                 Thread.sleep(this.getCrawlDelay());
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -48,6 +64,11 @@ public class SainsburyScraper extends Scraper {
         }
     }
 
+    /**
+     * The scrape method implements and overrides abstract class scrape method.
+     *
+     * @throws IOException {@link #scrape()}
+     */
     @Override
     public void scrape() throws IOException {
         // get list of current products in db
@@ -116,6 +137,14 @@ public class SainsburyScraper extends Scraper {
         }
     }
 
+    /**
+     * The productMatch method implements and overrides abstract class productMatch method.
+     *
+     * @param productKeywords
+     * @param scrapedProductDescription
+     * @return true if product match and false if product not match.
+     * {@link #productMatch(List, String)}
+     */
     @Override
     public boolean productMatch(List<String> productKeywords, String scrapedProductDescription) {
         boolean productMatch = true;
@@ -127,7 +156,13 @@ public class SainsburyScraper extends Scraper {
         return productMatch;
     }
 
-    // methods takes sting and return list of keywords based on the location of ,
+    /**
+     * The getProductKeywords method implements and overrides abstract class getProductKeywords method.
+     *
+     * @param keywordString
+     * @return list of product keywords.
+     * {@link #getProductKeywords(String)}
+     */
     @Override
     public List<String> getProductKeywords(String keywordString) {
         // lists keywords and index of , character
@@ -157,6 +192,13 @@ public class SainsburyScraper extends Scraper {
         return keywords;
     }
 
+    /**
+     * The getProductPriceFromString method implements and overrides abstract class getProductPriceFromString method.
+     *
+     * @param priceString
+     * @return product price
+     * {@link #getProductPriceFromString(String)}
+     */
     @Override
     public double getProductPriceFromString(String priceString) {
         double price = 0;

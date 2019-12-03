@@ -1,70 +1,100 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package com.bbebawe.pricecomparison.scrapers;
 
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import com.bbebawe.pricecomparison.appconfig.AppConfig;
-import com.bbebawe.pricecomparison.categories.Category;
 import com.bbebawe.pricecomparison.products.Product;
 import com.bbebawe.pricecomparison.products.ProductPrice;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author beshoy
+ * The AmazonScraper class represents web scrapper to scrape AmazonFresh website.
+ * The AmazonScraper extends Scraper class and implements its abstract methods.
+ * The class runs in a thread execution and use Selenium with google chrome driver to scrap AmazonFresh website.
+ *
+ * @see Scraper
  */
 public class AmazonScraper extends Scraper {
     private String querySelector;
+    // google chrome driver
     ChromeOptions options = new ChromeOptions();
 
+    /**
+     * No argument Default constructor.
+     */
     public AmazonScraper() {
     }
 
+    /**
+     * Second constructor.
+     *
+     * @param threadName
+     * @param crawlDelay
+     * @param scraperName
+     * @param crawlURL
+     * @param crawlQuery
+     * @param supermarket
+     * @param querySelector
+     */
     public AmazonScraper(String threadName, int crawlDelay, String scraperName, String crawlURL, String crawlQuery, Supermarket supermarket, String querySelector) {
         super(threadName, crawlDelay, scraperName, crawlURL, crawlQuery, supermarket);
         this.querySelector = querySelector;
     }
 
+    /**
+     * Third constructor.
+     *
+     * @param threadName
+     * @param crawlDelay
+     * @param scraperName
+     * @param crawlURL
+     * @param querySelector
+     * @param supermarket
+     */
     public AmazonScraper(String threadName, int crawlDelay, String scraperName, String crawlURL, String querySelector, Supermarket supermarket) {
         super(threadName, crawlDelay, scraperName, crawlURL, supermarket);
         this.querySelector = querySelector;
     }
 
 
+    /**
+     * get scrapper query selector.
+     *
+     * @return scrapper query selector.
+     */
     public String getQuerySelector() {
         return querySelector;
     }
 
+    /**
+     * sets scrapper query selector.
+     *
+     * @param querySelector
+     */
     public void setQuerySelector(String querySelector) {
         this.querySelector = querySelector;
     }
 
-
+    /**
+     * The run method is an implementation of Thread class method.
+     * The method calls a loop which keeps scrapping the website while the application is running.
+     * The method implements Thread execution and causes the Thread to sleep for certain time.
+     */
     @Override
     public void run() {
         while (true) {
             System.out.println(" =========== Amazon Fresh Scrapper Started ===========");
             try {
                 scrape();
+                // put thread to sleep
                 Thread.sleep(this.getCrawlDelay());
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -72,6 +102,12 @@ public class AmazonScraper extends Scraper {
         }
     }
 
+    /**
+     * The scrape method implements and overrides abstract class scrape method.
+     *
+     * @throws InterruptedException
+     * @throws IOException          {@link #scrape()}
+     */
     @Override
     public void scrape() throws InterruptedException, IOException {
         List<Product> productList = hibernateUtil.getProductList();
@@ -80,16 +116,15 @@ public class AmazonScraper extends Scraper {
         //Create instance of web driver
         WebDriver driver = new ChromeDriver(options);
 
+        // loop over list of products to scrap the website
         for (Product product : productList) {
-
+            // set crawl url end, used only with amazon
             String crawlURLEnd = "&i=amazonfresh";
             // set crawl query
             this.setCrawlQuery(product.getProductName());
-
             // create list product keywords
             String productKeyWordsString = product.getProductKeywords();
             List<String> productKeywords = getProductKeywords(productKeyWordsString);
-
             //Navigate Chrome to page.
             driver.get(this.getCrawlURL() + this.getCrawlQuery() + crawlURLEnd);
 
@@ -105,7 +140,6 @@ public class AmazonScraper extends Scraper {
             List<WebElement> scrapedProductsPrices = driver.findElements(By.cssSelector(".s-result-item .a-price .a-price-whole"));
             List<WebElement> scrapedProductsPricesFraction = driver.findElements(By.cssSelector(".s-result-item .a-price .a-price-fraction"));
             List<WebElement> scrapedProductsImages = driver.findElements(By.cssSelector(".s-result-item .s-image"));
-
             System.out.println("product name");
             System.out.println(scrapedProducts.size());
             System.out.println(scrapedProductsPrices.size());
@@ -114,12 +148,9 @@ public class AmazonScraper extends Scraper {
             for (int i = 0; i < scrapedProducts.size(); i++) {
                 String scrapedProductDescription = scrapedProducts.get(i).getText();
                 System.out.println(scrapedProductDescription);
-
                 boolean isProductMatch = productMatch(productKeywords, scrapedProductDescription);
-
                 if (isProductMatch) {
                     System.out.println("product match");
-
                     String priceString = "0";
                     try {
                         priceString = scrapedProductsPrices.get(i).getText() + "." + scrapedProductsPricesFraction.get(i).getText();
@@ -154,13 +185,20 @@ public class AmazonScraper extends Scraper {
                     }
                 }
             }
-
             System.out.println("Sleeping");
             this.sleep(2000);
             System.out.println("Back Again");
         }
     }
 
+    /**
+     * The productMatch method implements and overrides abstract class productMatch method.
+     *
+     * @param productKeywords
+     * @param scrapedProductDescription
+     * @return true if product match and false if product not match.
+     * {@link #productMatch(List, String)}
+     */
     @Override
     public boolean productMatch(List<String> productKeywords, String scrapedProductDescription) {
         boolean productMatch = true;
@@ -172,7 +210,13 @@ public class AmazonScraper extends Scraper {
         return productMatch;
     }
 
-    // methods takes sting and return list of keywords based on the location of ,
+    /**
+     * The getProductKeywords method implements and overrides abstract class getProductKeywords method.
+     *
+     * @param keywordString
+     * @return list of product keywords.
+     * {@link #getProductKeywords(String)}
+     */
     @Override
     public List<String> getProductKeywords(String keywordString) {
         // lists keywords and index of , character
@@ -202,6 +246,13 @@ public class AmazonScraper extends Scraper {
         return keywords;
     }
 
+    /**
+     * The getProductPriceFromString method implements and overrides abstract class getProductPriceFromString method.
+     *
+     * @param priceString
+     * @return product price
+     * {@link #getProductPriceFromString(String)}
+     */
     @Override
     public double getProductPriceFromString(String priceString) {
         double price = 0;

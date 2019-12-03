@@ -1,61 +1,82 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package com.bbebawe.pricecomparison.scrapers;
 
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import com.bbebawe.pricecomparison.categories.Category;
 import com.bbebawe.pricecomparison.products.Product;
 import com.bbebawe.pricecomparison.products.ProductPrice;
 import com.bbebawe.pricecomparison.supermarkets.Supermarket;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * @author beshoy
+ * The AsdaScraper class represents web scrapper to scrape Asda website.
+ * The AsdaScraper extends Scraper class and implements its abstract methods.
+ * The class runs in a thread execution and use Selenium with google chrome driver to scrap Asda website.
+ *
+ * @see Scraper
  */
 public class AsdaScraper extends Scraper {
     private String querySelector;
     ChromeOptions options = new ChromeOptions();
 
+    /**
+     * No argument Default constructor.
+     */
     public AsdaScraper() {
     }
 
+    /**
+     * Second constructor.
+     *
+     * @param threadName
+     * @param crawlDelay
+     * @param scraperName
+     * @param crawlURL
+     * @param crawlQuery
+     * @param supermarket
+     * @param querySelector
+     */
     public AsdaScraper(String threadName, int crawlDelay, String scraperName, String crawlURL, String crawlQuery, Supermarket supermarket, String querySelector) {
         super(threadName, crawlDelay, scraperName, crawlURL, crawlQuery, supermarket);
         this.querySelector = querySelector;
     }
 
-
+    /**
+     * get scrapper query selector.
+     *
+     * @return scrapper query selector.
+     */
     public String getQuerySelector() {
         return querySelector;
     }
 
+    /**
+     * sets scrapper query selector.
+     *
+     * @param querySelector
+     */
     public void setQuerySelector(String querySelector) {
         this.querySelector = querySelector;
     }
 
-
+    /**
+     * The run method is an implementation of Thread class method.
+     * The method calls a loop which keeps scrapping the website while the application is running.
+     * The method implements Thread execution and causes the Thread to sleep for certain time.
+     */
     @Override
     public void run() {
-        while(true) {
+        while (true) {
             System.out.println(" =========== Asda Scrapper Started ===========");
             try {
                 scrape();
+                // put the thread to sleep
                 Thread.sleep(this.getCrawlDelay());
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -63,10 +84,13 @@ public class AsdaScraper extends Scraper {
         }
     }
 
+    /**
+     * The scrape method implements and overrides abstract class scrape method.
+     * {@link #scrape()}
+     */
     @Override
     public void scrape() {
         List<Product> productList = hibernateUtil.getProductList();
-
         // run driver headless - not needed if we want default options
         options.setHeadless(true);
         //Create instance of web driver
@@ -146,7 +170,14 @@ public class AsdaScraper extends Scraper {
         driver.quit();
     }
 
-
+    /**
+     * The productMatch method implements and overrides abstract class productMatch method.
+     *
+     * @param productKeywords
+     * @param scrapedProductDescription
+     * @return true if product match and false if product not match.
+     * {@link #productMatch(List, String)}
+     */
     @Override
     public boolean productMatch(List<String> productKeywords, String scrapedProductDescription) {
         boolean productMatch = true;
@@ -158,7 +189,14 @@ public class AsdaScraper extends Scraper {
         return productMatch;
     }
 
-    // methods takes sting and return list of keywords based on the location of ,
+
+    /**
+     * The getProductKeywords method implements and overrides abstract class getProductKeywords method.
+     *
+     * @param keywordString
+     * @return list of product keywords.
+     * {@link #getProductKeywords(String)}
+     */
     @Override
     public List<String> getProductKeywords(String keywordString) {
         // lists keywords and index of , character
@@ -188,6 +226,13 @@ public class AsdaScraper extends Scraper {
         return keywords;
     }
 
+    /**
+     * The getProductPriceFromString method implements and overrides abstract class getProductPriceFromString method.
+     *
+     * @param priceString
+     * @return product price
+     * {@link #getProductPriceFromString(String)}
+     */
     @Override
     public double getProductPriceFromString(String priceString) {
         double price = 0;

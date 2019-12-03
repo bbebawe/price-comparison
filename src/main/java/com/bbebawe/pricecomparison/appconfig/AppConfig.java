@@ -1,3 +1,4 @@
+
 package com.bbebawe.pricecomparison.appconfig;
 
 import com.bbebawe.pricecomparison.hibernateutils.HibernateUtil;
@@ -10,12 +11,20 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * The AppConfig class holds Spring Beans configuration.
+ */
 // annotate the file to be used as configuration file for the beans
 @Configuration
 public class AppConfig {
+
     private SessionFactory sessionFactory;
 
-    // ScraperManager Bean
+    /**
+     * The getScraperManager method injects Scrappers beans into Scrapper manager object.
+     *
+     * @return Scraper Manger object that contains list of web scrappers.
+     */
     @Bean(name = "scraperManager")
     public ScraperManager getScraperManager() {
         ScraperManager scraperManager = new ScraperManager();
@@ -27,7 +36,11 @@ public class AppConfig {
         return scraperManager;
     }
 
-    // HibernateUtil Bean
+    /**
+     * The getHibernateUtil method injects Session Factory bean into Hibernate Utils object.
+     *
+     * @return Hibernate Utils object.
+     */
     @Bean(name = "hibernateUtil")
     public HibernateUtil getHibernateUtil() {
         HibernateUtil hibernateUtil = new HibernateUtil();
@@ -35,7 +48,11 @@ public class AppConfig {
         return hibernateUtil;
     }
 
-    // Session Factory Bean
+    /**
+     * The getSessionFactory method creates new Session Factory.
+     *
+     * @return Session Factory Bean.
+     */
     @Bean(name = "sessionFactory")
     SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
@@ -71,7 +88,11 @@ public class AppConfig {
         return sessionFactory;
     }
 
-    // Sainsbury Supermarket Bean
+    /**
+     * The getSainsbury method creates Sainsbury Supermarket Bean.
+     *
+     * @return Sainsbury Supermarket Bean.
+     */
     @Bean(name = "sainsbuysSupermarket")
     public Supermarket getSainsbury() {
         Supermarket sainsbury = new Supermarket();
@@ -82,7 +103,11 @@ public class AppConfig {
         return sainsbury;
     }
 
-    // Morrisons Supermarket Bean
+    /**
+     * The getMorrisons method creates Morrisons Supermarket Bean.
+     *
+     * @return Morrisons Supermarket Bean.
+     */
     @Bean(name = "morrisonsSupermarket")
     public Supermarket getMorrisons() {
         Supermarket morrisons = new Supermarket();
@@ -93,7 +118,11 @@ public class AppConfig {
         return morrisons;
     }
 
-    // AmazonFresh Supermarket Bean
+    /**
+     * The getAmazonFresh method creates AmazonFresh Supermarket Bean.
+     *
+     * @return AmazonFresh Supermarket Bean.
+     */
     @Bean(name = "amazonFreshSupermarket")
     public Supermarket getAmazonFresh() {
         Supermarket amazonFresh = new Supermarket();
@@ -104,7 +133,11 @@ public class AppConfig {
         return amazonFresh;
     }
 
-    // Asda Supermarket Bean
+    /**
+     * The getAsda method creates Asda Supermarket Bean.
+     *
+     * @return Asda Supermarket Bean.
+     */
     @Bean(name = "asdaSupermarket")
     public Supermarket getAsda() {
         Supermarket asda = new Supermarket();
@@ -115,7 +148,11 @@ public class AppConfig {
         return asda;
     }
 
-    // Tesco Supermarket Bean
+    /**
+     * The getTesco method creates Tesco Supermarket Bean.
+     *
+     * @return Tesco Supermarket Bean.
+     */
     @Bean(name = "tescoSupermarket")
     public Supermarket getTesco() {
         Supermarket tesco = new Supermarket();
@@ -126,7 +163,11 @@ public class AppConfig {
         return tesco;
     }
 
-    // Sainsbury Scrapper Bean
+    /**
+     * The getSainsburyScraper method injects Sainsbury Supermarket Bean and Hibernate Utils Bean into Sainsbury Supermarket Scraper Bean.
+     *
+     * @return Sainsbury Supermarket Scraper Bean.
+     */
     @Bean(name = "sainsburyScraper")
     public SainsburyScraper getSainsburyScraper() {
         SainsburyScraper sainsburyScraper = new SainsburyScraper();
@@ -141,7 +182,11 @@ public class AppConfig {
         return sainsburyScraper;
     }
 
-    // Morrisons Scrapper Bean
+    /**
+     * The getMorrisonsScraper method injects Morrisons Supermarket Bean and Hibernate Utils Bean into Morrisons Supermarket Scraper Bean.
+     *
+     * @return Morrisons Supermarket Scraper Bean.
+     */
     @Bean(name = "morrisonsScraper")
     public MorrisonsScraper getMorrisonsScraper() {
         MorrisonsScraper morrisonsScraper = new MorrisonsScraper();
@@ -156,7 +201,11 @@ public class AppConfig {
         return morrisonsScraper;
     }
 
-    // AmazonFresh Scrapper Bean
+    /**
+     * The getAmazonFreshScraper method injects AmazonFresh Supermarket Bean and Hibernate Utils Bean into AmazonFresh Supermarket Scraper Bean.
+     *
+     * @return AmazonFresh Supermarket Scraper Bean.
+     */
     @Bean(name = "amazonFreshScraper")
     public AmazonScraper getAmazonFreshScraper() {
         AmazonScraper amazonScraper = new AmazonScraper();
@@ -171,7 +220,11 @@ public class AppConfig {
         return amazonScraper;
     }
 
-    // Asda Scrapper Bean
+    /**
+     * The getAsdaScraper method injects Asda Supermarket Bean and Hibernate Utils Bean into Asda Supermarket Scraper Bean.
+     *
+     * @return Asda Supermarket Scraper Bean.
+     */
     @Bean(name = "asdaScraper")
     public AsdaScraper getAsdaScraper() {
         AsdaScraper asdaScraper = new AsdaScraper();
@@ -186,7 +239,11 @@ public class AppConfig {
         return asdaScraper;
     }
 
-    // Tesco Scrapper Bean
+    /**
+     * The getTescoScraper method injects Tesco Supermarket Bean and Hibernate Utils Bean into Tesco Supermarket Scraper Bean.
+     *
+     * @return Tesco Supermarket Scraper Bean.
+     */
     @Bean(name = "tescoScraper")
     public TescoScraper getTescoScraper() {
         TescoScraper tescoScraper = new TescoScraper();
